@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -170,6 +171,7 @@ public class DifyWorkflowClientTest {
      */
     @Test
     public void testStopWorkflow() throws Exception {
+        System.out.println(new Date().getTime());
         // 创建工作流请求
         Map<String, Object> inputs = new HashMap<>();
         inputs.put("input", "请写一篇长文章，描述人工智能的未来发展");
@@ -244,6 +246,7 @@ public class DifyWorkflowClientTest {
 
         // 等待获取任务ID
         boolean gotTaskId = latch.await(10, TimeUnit.SECONDS);
+        System.out.println(new Date().getTime());
         assertTrue(gotTaskId, "未能获取任务ID");
         assertNotNull(taskId.get(), "任务ID不应为空");
 

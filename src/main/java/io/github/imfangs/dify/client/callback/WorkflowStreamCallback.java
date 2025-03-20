@@ -39,13 +39,6 @@ public interface WorkflowStreamCallback extends BaseStreamCallback {
     }
 
     /**
-     * 工作流LLM执行过程
-     * @param event 事件数据
-     */
-    default void onWorkflowTextChunk(WorkflowTextChunkEvent event){
-    }
-
-    /**
      * TTS 消息事件
      *
      * @param event 事件数据

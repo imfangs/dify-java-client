@@ -278,10 +278,6 @@ public class StreamEventDispatcher {
                     WorkflowFinishedEvent workflowFinishedEvent = JsonUtils.fromJson(data, WorkflowFinishedEvent.class);
                     callback.onWorkflowFinished(workflowFinishedEvent);
                     break;
-                case WORKFLOW_TEXT_CHUNK:
-                    WorkflowTextChunkEvent workflowTextChunkEvent = JsonUtils.fromJson(data, WorkflowTextChunkEvent.class);
-                    callback.onWorkflowTextChunk(workflowTextChunkEvent);
-                    break;
                 case TTS_MESSAGE:
                     TtsMessageEvent ttsMessageEvent = JsonUtils.fromJson(data, TtsMessageEvent.class);
                     callback.onTtsMessage(ttsMessageEvent);

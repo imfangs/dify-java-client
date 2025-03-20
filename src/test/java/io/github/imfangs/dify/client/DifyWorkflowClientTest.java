@@ -10,7 +10,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -47,7 +46,7 @@ public class DifyWorkflowClientTest {
     public void testRunWorkflow() throws Exception {
         // 创建工作流请求
         Map<String, Object> inputs = new HashMap<>();
-        inputs.put("input", "请介绍一下人工智能的应用场景");
+        inputs.put("query", "请介绍一下人工智能的应用场景");
 
         WorkflowRunRequest request = WorkflowRunRequest.builder()
                 .inputs(inputs)
@@ -79,7 +78,7 @@ public class DifyWorkflowClientTest {
     public void testRunWorkflowStream() throws Exception {
         // 创建工作流请求
         Map<String, Object> inputs = new HashMap<>();
-        inputs.put("input", "请详细介绍一下机器学习的基本原理");
+        inputs.put("query", "请详细介绍一下机器学习的基本原理");
 
         WorkflowRunRequest request = WorkflowRunRequest.builder()
                 .inputs(inputs)
@@ -116,11 +115,6 @@ public class DifyWorkflowClientTest {
             public void onWorkflowFinished(WorkflowFinishedEvent event) {
                 System.out.println("工作流完成: " + event);
                 latch.countDown();
-            }
-
-            @Override
-            public void onWorkflowTextChunk(WorkflowTextChunkEvent event) {
-                System.out.println("工作流DDL执行过程: " + event);
             }
 
             @Override
@@ -171,10 +165,9 @@ public class DifyWorkflowClientTest {
      */
     @Test
     public void testStopWorkflow() throws Exception {
-        System.out.println(new Date().getTime());
         // 创建工作流请求
         Map<String, Object> inputs = new HashMap<>();
-        inputs.put("input", "请写一篇长文章，描述人工智能的未来发展");
+        inputs.put("query", "请写一篇长文章，描述人工智能的未来发展");
 
         WorkflowRunRequest request = WorkflowRunRequest.builder()
                 .inputs(inputs)
@@ -246,7 +239,6 @@ public class DifyWorkflowClientTest {
 
         // 等待获取任务ID
         boolean gotTaskId = latch.await(10, TimeUnit.SECONDS);
-        System.out.println(new Date().getTime());
         assertTrue(gotTaskId, "未能获取任务ID");
         assertNotNull(taskId.get(), "任务ID不应为空");
 
@@ -266,7 +258,7 @@ public class DifyWorkflowClientTest {
     public void testGetWorkflowRun() throws Exception {
         // 创建工作流请求
         Map<String, Object> inputs = new HashMap<>();
-        inputs.put("input", "请简要介绍一下深度学习");
+        inputs.put("query", "请简要介绍一下深度学习");
 
         WorkflowRunRequest request = WorkflowRunRequest.builder()
                 .inputs(inputs)

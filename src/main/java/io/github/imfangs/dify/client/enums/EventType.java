@@ -27,12 +27,7 @@ public enum EventType {
     WORKFLOW_STARTED("workflow_started"), // workflow 开始执行
     NODE_STARTED("node_started"),         // node 开始执行
     NODE_FINISHED("node_finished"),       // node 执行结束
-    WORKFLOW_FINISHED("workflow_finished"), // workflow 执行结束
-
-    // Workflow 中间节点解析
-    WORKFLOW_TEXT_CHUNK("text_chunk") // workflow llm模型输入结果
-
-    ;
+    WORKFLOW_FINISHED("workflow_finished"); // workflow 执行结束
 
     private final String value;
 

@@ -9,6 +9,7 @@ import io.github.imfangs.dify.client.model.file.FileUploadResponse;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,27 +66,42 @@ public class DifyBaseClientImpl extends AbstractDifyClient implements DifyBaseCl
     }
 
     @Override
-    public FileUploadResponse uploadFile(FileUploadRequest request, InputStream inputStream, String fileName) throws IOException, DifyApiException {
-        RequestBody fileBody = new RequestBody() {
-            @Override
-            public MediaType contentType() {
-                return OCTET_STREAM;
+    public FileUploadResponse uploadFile(FileUploadRequest request, InputStream inputStream, String fileName) throws IOException {
+        try (InputStream fileInputStream = inputStream;
+             ByteArrayOutputStream fileDataOutputStream = new ByteArrayOutputStream()) {
+            byte[] readBuffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fileInputStream.read(readBuffer, 0, readBuffer.length)) != -1) {
+                fileDataOutputStream.write(readBuffer, 0, bytesRead);
             }
+            fileDataOutputStream.flush();
+            byte[] fileDataByteArray = fileDataOutputStream.toByteArray();
 
-            @Override
-            public void writeTo(okio.BufferedSink sink) throws IOException {
-                try (okio.Source source = okio.Okio.source(inputStream)) {
-                    sink.writeAll(source);
+            RequestBody fileRequestBody = new RequestBody() {
+                @Override
+                public MediaType contentType() {
+                    return OCTET_STREAM;
                 }
-            }
-        };
 
-        RequestBody requestBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("file", fileName, fileBody)
-                .addFormDataPart("user", request.getUser())
-                .build();
-        return uploadFile(requestBody);
+                @Override
+                public void writeTo(okio.BufferedSink sink) throws IOException {
+                    sink.write(fileDataByteArray);
+                }
+
+                @Override
+                public long contentLength() {
+                    return fileDataByteArray.length;
+                }
+            };
+
+            RequestBody multipartRequestBody = new MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("file", fileName, fileRequestBody)
+                    .addFormDataPart("user", request.getUser())
+                    .build();
+
+            return uploadFile(multipartRequestBody);
+        }
     }
 
     private FileUploadResponse uploadFile(RequestBody requestBody) throws IOException, DifyApiException {

@@ -46,6 +46,13 @@ public class ProcessRule {
         private Segmentation segmentation;
 
         /**
+         * 父分段的召回模式
+         * full-doc 全文召回
+         * paragraph 段落召回
+         */
+        private String parentMode;
+
+        /**
          * 子分段规则
          */
         private SubchunkSegmentation subchunkSegmentation;
@@ -90,17 +97,6 @@ public class ProcessRule {
          */
         private Integer maxTokens;
 
-        /**
-         * 父分段的召回模式
-         * full-doc 全文召回
-         * paragraph 段落召回
-         */
-        private String parentMode;
-
-        /**
-         * 分段重叠
-         */
-        private Integer chunkOverlap;
     }
 
     /**
@@ -120,5 +116,10 @@ public class ProcessRule {
          * 最大长度 (token) 需要校验小于父级的长度
          */
         private Integer maxTokens;
+
+        /**
+         * 分段重叠
+         */
+        private Integer chunkOverlap;
     }
 }

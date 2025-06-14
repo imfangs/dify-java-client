@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * LLM 返回文本块事件
  */
@@ -18,4 +20,10 @@ public class MessageEvent extends BaseMessageEvent {
      */
     @JsonProperty("answer")
     private String answer;
+
+    /**
+     * 文本来源路径，帮助开发者了解文本是由哪个节点的哪个变量生成的
+     */
+    @JsonProperty("from_variable_selector")
+    private List<String> fromVariableSelector;
 }

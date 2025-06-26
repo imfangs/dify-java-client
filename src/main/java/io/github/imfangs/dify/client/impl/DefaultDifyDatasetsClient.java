@@ -102,7 +102,8 @@ public class DefaultDifyDatasetsClient extends AbstractDifyClient implements Dif
         Request httpRequest = createDeleteRequest(path, null);
 
         try (Response response = httpClient.newCall(httpRequest).execute()) {
-            if (response.code() == 204) {
+            //官网文档返回204，但是实际返回200
+            if (response.code() == 204 || response.code() == 200) {
                 SimpleResponse simpleResponse = new SimpleResponse();
                 simpleResponse.setResult("success");
                 return simpleResponse;

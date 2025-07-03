@@ -71,4 +71,12 @@ public interface ChatStreamCallback extends BaseStreamCallback {
     default void onAgentThought(AgentThoughtEvent event) {
     }
 
+    /**
+     * Agent 日志事件
+     *
+     * @param event 事件数据
+     */
+    default void onAgentLog(AgentLogEvent event) {
+    }
+
 }

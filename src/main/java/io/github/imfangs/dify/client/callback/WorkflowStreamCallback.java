@@ -63,6 +63,14 @@ public interface WorkflowStreamCallback extends BaseStreamCallback {
     }
 
     /**
+     * Agent 日志事件
+     *
+     * @param event 事件数据
+     */
+    default void onAgentLog(AgentLogEvent event) {
+    }
+
+    /**
      * 工作流LLM执行过程
      * @param event 事件数据
      */

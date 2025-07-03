@@ -92,6 +92,10 @@ public class StreamEventDispatcher {
                     IterationCompletedEvent iterationCompletedEvent = JsonUtils.fromJson(data, IterationCompletedEvent.class);
                     callback.onIterationCompleted(iterationCompletedEvent);
                     break;
+                case AGENT_LOG:
+                    AgentLogEvent agentLogEvent = JsonUtils.fromJson(data, AgentLogEvent.class);
+                    callback.onAgentLog(agentLogEvent);
+                    break;
                 case ERROR:
                     ErrorEvent errorEvent = JsonUtils.fromJson(data, ErrorEvent.class);
                     callback.onError(errorEvent);
@@ -162,6 +166,10 @@ public class StreamEventDispatcher {
                     AgentThoughtEvent agentThoughtEvent = JsonUtils.fromJson(data, AgentThoughtEvent.class);
                     callback.onAgentThought(agentThoughtEvent);
                     break;
+                case AGENT_LOG:
+                    AgentLogEvent agentLogEvent = JsonUtils.fromJson(data, AgentLogEvent.class);
+                    callback.onAgentLog(agentLogEvent);
+                    break;
                 case ERROR:
                     ErrorEvent errorEvent = JsonUtils.fromJson(data, ErrorEvent.class);
                     callback.onError(errorEvent);
@@ -228,6 +236,10 @@ public class StreamEventDispatcher {
                 case MESSAGE_REPLACE:
                     MessageReplaceEvent messageReplaceEvent = JsonUtils.fromJson(data, MessageReplaceEvent.class);
                     callback.onMessageReplace(messageReplaceEvent);
+                    break;
+                case AGENT_LOG:
+                    AgentLogEvent agentLogEvent = JsonUtils.fromJson(data, AgentLogEvent.class);
+                    callback.onAgentLog(agentLogEvent);
                     break;
                 case ERROR:
                     ErrorEvent errorEvent = JsonUtils.fromJson(data, ErrorEvent.class);
@@ -305,6 +317,10 @@ public class StreamEventDispatcher {
                 case WORKFLOW_TEXT_CHUNK:
                     WorkflowTextChunkEvent workflowTextChunkEvent = JsonUtils.fromJson(data, WorkflowTextChunkEvent.class);
                     callback.onWorkflowTextChunk(workflowTextChunkEvent);
+                    break;
+                case AGENT_LOG:
+                    AgentLogEvent agentLogEvent = JsonUtils.fromJson(data, AgentLogEvent.class);
+                    callback.onAgentLog(agentLogEvent);
                     break;
                 case TTS_MESSAGE:
                     TtsMessageEvent ttsMessageEvent = JsonUtils.fromJson(data, TtsMessageEvent.class);

@@ -42,7 +42,9 @@ public class DefaultDifyDatasetsClient extends AbstractDifyClient implements Dif
     private static final String DOCUMENT_METADATA_PATH = "/documents/metadata";
     //嵌入模型列表路径
     private static final String EMBEDDING_MODEL_TYPES_PATH = "/workspaces/current/models/model-types/text-embedding";
-    
+    //文档状态更新路径
+    private static final String DOCUMENTS_STATUS_PATH = "/documents/status";
+
     // 标签相关路径常量
     private static final String TAGS_PATH = "/tags";
     private static final String TAGS_BINDING_PATH = "/tags/binding";
@@ -183,6 +185,22 @@ public class DefaultDifyDatasetsClient extends AbstractDifyClient implements Dif
     }
 
     @Override
+    public DetailedDocumentResponse getDocumentDetail(String datasetId, String documentId, String metadata) throws IOException, DifyApiException {
+        Map<String, Object> queryParams = new HashMap<>();
+        addIfNotEmpty(queryParams, "metadata", metadata);
+
+        String path = buildDocumentPath(datasetId, documentId);
+        String url = buildUrlWithParams(path, queryParams);
+        return executeGet(url, DetailedDocumentResponse.class);
+    }
+
+    @Override
+    public SimpleResponse updateDocumentStatus(String datasetId, String action, UpdateDocumentStatusRequest request) throws IOException, DifyApiException {
+        String path = DATASETS_PATH + "/" + datasetId + DOCUMENTS_STATUS_PATH + "/" + action;
+        return executePatch(path, request, SimpleResponse.class);
+    }
+
+    @Override
     public SegmentListResponse createSegments(String datasetId, String documentId, CreateSegmentsRequest request) throws IOException, DifyApiException {
         String path = buildDocumentPath(datasetId, documentId) + SEGMENTS_PATH;
         return executePost(path, request, SegmentListResponse.class);
@@ -225,26 +243,26 @@ public class DefaultDifyDatasetsClient extends AbstractDifyClient implements Dif
     }
 
     @Override
-    public ChildChunkResponse createChildChunk(String datasetId, String docummentId, String segmentId, SaveChildChunkRequest request) throws IOException, DifyApiException {
-        String path = buildSegmentPath(datasetId, docummentId, segmentId) + CHILD_CHUNKS_PATH;
+    public ChildChunkResponse createChildChunk(String datasetId, String documentId, String segmentId, SaveChildChunkRequest request) throws IOException, DifyApiException {
+        String path = buildSegmentPath(datasetId, documentId, segmentId) + CHILD_CHUNKS_PATH;
         return executePost(path, request, ChildChunkResponse.class);
     }
 
     @Override
-    public ChildChunkListResponse getChildChunks(String datasetId, String docummentId, String segmentId, String keyword, Integer page, Integer limit) throws IOException, DifyApiException {
-        String path = buildSegmentPath(datasetId, docummentId, segmentId) + CHILD_CHUNKS_PATH;
+    public ChildChunkListResponse getChildChunks(String datasetId, String documentId, String segmentId, String keyword, Integer page, Integer limit) throws IOException, DifyApiException {
+        String path = buildSegmentPath(datasetId, documentId, segmentId) + CHILD_CHUNKS_PATH;
         return executeGet(path, ChildChunkListResponse.class);
     }
 
     @Override
-    public void deleteChildChunks(String datasetId, String docummentId, String segmentId, String childChunkId) throws IOException, DifyApiException {
-        String path = buildChildChunkPath(datasetId, docummentId, segmentId, childChunkId);
+    public void deleteChildChunks(String datasetId, String documentId, String segmentId, String childChunkId) throws IOException, DifyApiException {
+        String path = buildChildChunkPath(datasetId, documentId, segmentId, childChunkId);
         executeDelete(path, null, Object.class);
     }
 
     @Override
-    public ChildChunkResponse updateChildChunk(String datasetId, String docummentId, String segmentId, String childChunkId, SaveChildChunkRequest request) throws IOException, DifyApiException {
-        String path = buildChildChunkPath(datasetId, docummentId, segmentId, childChunkId);
+    public ChildChunkResponse updateChildChunk(String datasetId, String documentId, String segmentId, String childChunkId, SaveChildChunkRequest request) throws IOException, DifyApiException {
+        String path = buildChildChunkPath(datasetId, documentId, segmentId, childChunkId);
         return executePatch(path, request, ChildChunkResponse.class);
     }
 
@@ -339,8 +357,8 @@ public class DefaultDifyDatasetsClient extends AbstractDifyClient implements Dif
     }
 
 
-    private String buildChildChunkPath(String datasetId, String docummentId, String segmentId, String childChunkId) {
-        return buildSegmentPath(datasetId, docummentId, segmentId) + CHILD_CHUNKS_PATH + "/" + childChunkId;
+    private String buildChildChunkPath(String datasetId, String documentId, String segmentId, String childChunkId) {
+        return buildSegmentPath(datasetId, documentId, segmentId) + CHILD_CHUNKS_PATH + "/" + childChunkId;
     }
 
     /**
@@ -465,7 +483,7 @@ public class DefaultDifyDatasetsClient extends AbstractDifyClient implements Dif
                 throw new DifyApiException(response.code(), "HTTP_ERROR", response.message());
             }
             String responseBody = response.body().string();
-            com.fasterxml.jackson.core.type.TypeReference<List<TagResponse>> typeRef = 
+            com.fasterxml.jackson.core.type.TypeReference<List<TagResponse>> typeRef =
                 new com.fasterxml.jackson.core.type.TypeReference<List<TagResponse>>() {};
             return JsonUtils.fromJson(responseBody, typeRef);
         }

@@ -46,4 +46,12 @@ public interface CompletionStreamCallback extends BaseStreamCallback {
     default void onMessageReplace(MessageReplaceEvent event) {
     }
 
+    /**
+     * Agent 日志事件
+     *
+     * @param event 事件数据
+     */
+    default void onAgentLog(AgentLogEvent event) {
+    }
+
 }

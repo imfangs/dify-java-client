@@ -163,6 +163,30 @@ public interface DifyDatasetsClient {
     DocumentListResponse getDocuments(String datasetId, String keyword, Integer page, Integer limit) throws IOException, DifyApiException;
 
     /**
+     * 获取文档详情
+     *
+     * @param datasetId  知识库ID
+     * @param documentId 文档ID
+     * @param metadata   元数据过滤条件 all, only, 或者 without. 默认是 all
+     * @return 文档详情
+     * @throws IOException      IO异常
+     * @throws DifyApiException API异常
+     */
+    DetailedDocumentResponse getDocumentDetail(String datasetId, String documentId, String metadata) throws IOException, DifyApiException;
+
+    /**
+     * 更新文档状态
+     *
+     * @param datasetId 知识库ID
+     * @param action    操作类型：enable - 启用文档, disable - 禁用文档, archive - 归档文档, un_archive - 取消归档文档
+     * @param request   更新文档状态请求
+     * @return 响应
+     * @throws IOException      IO异常
+     * @throws DifyApiException API异常
+     */
+    SimpleResponse updateDocumentStatus(String datasetId, String action, UpdateDocumentStatusRequest request) throws IOException, DifyApiException;
+
+    /**
      * 新增文档分段
      *
      * @param datasetId  知识库ID
@@ -246,20 +270,20 @@ public interface DifyDatasetsClient {
      * 创建子分段
      *
      * @param datasetId   知识库ID
-     * @param docummentId 文档ID
+     * @param documentId 文档ID
      * @param segmentId   分段ID
      * @param request     子分段请求
      * @return 子分段信息
      * @throws IOException      IO异常
      * @throws DifyApiException API异常
      */
-    ChildChunkResponse createChildChunk(String datasetId, String docummentId, String segmentId, SaveChildChunkRequest request) throws IOException, DifyApiException;
+    ChildChunkResponse createChildChunk(String datasetId, String documentId, String segmentId, SaveChildChunkRequest request) throws IOException, DifyApiException;
 
     /**
      * 获取子分段
      *
      * @param datasetId   知识库ID
-     * @param docummentId 文档ID
+     * @param documentId 文档ID
      * @param segmentId   分段ID
      * @param keyword     关键词
      * @param page        页码
@@ -268,27 +292,27 @@ public interface DifyDatasetsClient {
      * @throws IOException      IO异常
      * @throws DifyApiException API异常
      */
-    ChildChunkListResponse getChildChunks(String datasetId, String docummentId, String segmentId, String keyword, Integer page, Integer limit) throws IOException, DifyApiException;
+    ChildChunkListResponse getChildChunks(String datasetId, String documentId, String segmentId, String keyword, Integer page, Integer limit) throws IOException, DifyApiException;
 
 
     /**
      * 删除子分段
      *
      * @param datasetId    知识库ID
-     * @param docummentId
+     * @param documentId
      * @param segmentId
      * @param childChunkId
      * @throws IOException      IO异常
      * @throws DifyApiException API异常
      */
-    void deleteChildChunks(String datasetId, String docummentId, String segmentId, String childChunkId) throws IOException, DifyApiException;
+    void deleteChildChunks(String datasetId, String documentId, String segmentId, String childChunkId) throws IOException, DifyApiException;
 
 
     /**
      * 更新子分段
      *
      * @param datasetId    知识库ID
-     * @param docummentId  文档ID
+     * @param documentId  文档ID
      * @param segmentId    分段ID
      * @param childChunkId 子分段ID
      * @param request      子分段请求
@@ -296,7 +320,7 @@ public interface DifyDatasetsClient {
      * @throws IOException      IO异常
      * @throws DifyApiException API异常
      */
-    ChildChunkResponse updateChildChunk(String datasetId, String docummentId, String segmentId, String childChunkId, SaveChildChunkRequest request) throws IOException, DifyApiException;
+    ChildChunkResponse updateChildChunk(String datasetId, String documentId, String segmentId, String childChunkId, SaveChildChunkRequest request) throws IOException, DifyApiException;
 
 
     /**

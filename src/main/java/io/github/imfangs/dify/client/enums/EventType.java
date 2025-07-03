@@ -21,6 +21,7 @@ public enum EventType {
     // Agent 相关事件
     AGENT_MESSAGE("agent_message"),       // Agent模式下返回文本块事件
     AGENT_THOUGHT("agent_thought"),       // Agent模式下思考步骤事件
+    AGENT_LOG("agent_log"),               // Agent 日志事件
     MESSAGE_FILE("message_file"),         // 文件事件
 
     // Workflow 相关事件

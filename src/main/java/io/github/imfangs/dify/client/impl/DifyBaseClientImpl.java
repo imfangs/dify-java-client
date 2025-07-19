@@ -4,6 +4,7 @@ import io.github.imfangs.dify.client.DifyBaseClient;
 import io.github.imfangs.dify.client.exception.DifyApiException;
 import io.github.imfangs.dify.client.model.chat.AppInfoResponse;
 import io.github.imfangs.dify.client.model.chat.AppParametersResponse;
+import io.github.imfangs.dify.client.model.chat.AppWebAppSettingResponse;
 import io.github.imfangs.dify.client.model.file.FileUploadRequest;
 import io.github.imfangs.dify.client.model.file.FileUploadResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,8 @@ public class DifyBaseClientImpl extends AbstractDifyClient implements DifyBaseCl
     private static final String FILES_UPLOAD_PATH = "/files/upload";
     private static final String INFO_PATH = "/info";
     private static final String PARAMETERS_PATH = "/parameters";
+    private static final String SITE_PATH = "/site";
+
 
     /**
      * 构造函数
@@ -105,6 +108,11 @@ public class DifyBaseClientImpl extends AbstractDifyClient implements DifyBaseCl
     @Override
     public AppParametersResponse getAppParameters() throws IOException, DifyApiException {
         return executeGet(PARAMETERS_PATH, AppParametersResponse.class);
+    }
+
+    @Override
+    public AppWebAppSettingResponse getAppWebAppSettings() throws IOException, DifyApiException {
+        return executeGet(SITE_PATH, AppWebAppSettingResponse.class);
     }
 
     @Override

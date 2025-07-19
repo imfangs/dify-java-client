@@ -3,6 +3,7 @@ package io.github.imfangs.dify.client;
 import io.github.imfangs.dify.client.exception.DifyApiException;
 import io.github.imfangs.dify.client.model.chat.AppInfoResponse;
 import io.github.imfangs.dify.client.model.chat.AppParametersResponse;
+import io.github.imfangs.dify.client.model.chat.AppWebAppSettingResponse;
 import io.github.imfangs.dify.client.model.file.FileUploadRequest;
 import io.github.imfangs.dify.client.model.file.FileUploadResponse;
 
@@ -67,6 +68,15 @@ public interface DifyBaseClient extends AutoCloseable {
      * @throws DifyApiException API异常
      */
     AppParametersResponse getAppParameters() throws IOException, DifyApiException;
+
+    /**
+     * 获取应用 WebApp 设置
+     *
+     * @return io.github.imfangs.dify.client.model.chat.AppWebAppSettingResponse
+     * @throws IOException IO异常
+     * @throws DifyApiException API异常
+     */
+    AppWebAppSettingResponse getAppWebAppSettings() throws IOException, DifyApiException;
 
     /**
      * 关闭客户端资源

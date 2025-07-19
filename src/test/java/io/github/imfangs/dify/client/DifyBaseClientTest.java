@@ -47,6 +47,14 @@ public class DifyBaseClientTest {
         }
     }
 
+    @Test
+    public void testGetAppWebAppSettings() throws Exception {
+        try (DifyClient client = DifyClientFactory.createClient(BASE_URL, API_KEY)) {
+            AppWebAppSettingResponse webAppSettings = client.getAppWebAppSettings();
+            System.out.println("应用 WebApp 设置: " + webAppSettings);
+        }
+    }
+
     /**
      * 测试获取应用元数据
      */

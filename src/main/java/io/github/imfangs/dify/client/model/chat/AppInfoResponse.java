@@ -31,4 +31,14 @@ public class AppInfoResponse {
      * 应用标签
      */
     private List<String> tags;
+
+    /**
+     * 应用类型
+     * workflow: 工作流;
+     * chat: 聊天助手;
+     * agent-chat: agent;
+     * completion: 文本生成
+     * advanced-chant: chatflow
+     */
+    private String mode;
 }

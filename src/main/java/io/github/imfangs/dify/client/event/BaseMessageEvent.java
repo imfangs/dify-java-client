@@ -16,7 +16,7 @@ public abstract class BaseMessageEvent extends BaseEvent {
     /**
      * 消息唯一ID
      */
-    @JsonProperty("id")
+    @JsonProperty("message_id")
     private String messageId;
 
     /**

@@ -6,6 +6,7 @@ import io.github.imfangs.dify.client.model.chat.AppParametersResponse;
 import io.github.imfangs.dify.client.model.chat.AppWebAppSettingResponse;
 import io.github.imfangs.dify.client.model.file.FileUploadRequest;
 import io.github.imfangs.dify.client.model.file.FileUploadResponse;
+import io.github.imfangs.dify.client.model.file.FilePreviewResponse;
 
 import java.io.File;
 import java.io.IOException;
@@ -77,6 +78,29 @@ public interface DifyBaseClient extends AutoCloseable {
      * @throws DifyApiException API异常
      */
     AppWebAppSettingResponse getAppWebAppSettings() throws IOException, DifyApiException;
+
+    /**
+     * 预览文件
+     * 预览或下载已上传的文件。文件只能在属于请求应用程序的消息范围内访问。
+     *
+     * @param fileId 文件ID，从文件上传 API 响应中获得的唯一标识符
+     * @return 文件预览响应
+     * @throws IOException IO异常
+     * @throws DifyApiException API异常
+     */
+    FilePreviewResponse previewFile(String fileId) throws IOException, DifyApiException;
+
+    /**
+     * 预览或下载文件
+     * 预览或下载已上传的文件。文件只能在属于请求应用程序的消息范围内访问。
+     *
+     * @param fileId 文件ID，从文件上传 API 响应中获得的唯一标识符
+     * @param asAttachment 是否强制将文件作为附件下载，默认为 false（在浏览器中预览）
+     * @return 文件预览响应
+     * @throws IOException IO异常
+     * @throws DifyApiException API异常
+     */
+    FilePreviewResponse previewFile(String fileId, boolean asAttachment) throws IOException, DifyApiException;
 
     /**
      * 关闭客户端资源

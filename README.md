@@ -60,14 +60,14 @@ Dify Java Client 提供以下核心功能：
 <dependency>
     <groupId>io.github.ferrymo</groupId>
     <artifactId>dify-java-client</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation 'io.github.ferrymo:dify-java-client:1.2.0'
+implementation 'io.github.ferrymo:dify-java-client:1.2.1'
 ```
 
 ## 快速开始

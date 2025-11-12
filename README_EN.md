@@ -60,14 +60,14 @@ Dify Java Client provides the following core features:
 <dependency>
     <groupId>io.github.ferrymo</groupId>
     <artifactId>dify-java-client</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation 'io.github.ferrymo:dify-java-client:1.2.0'
+implementation 'io.github.ferrymo:dify-java-client:1.2.1'
 ```
 
 ## Quick Start

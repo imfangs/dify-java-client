@@ -3,26 +3,26 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.imfangs</groupId>
+    <groupId>io.github.ferrymo</groupId>
     <artifactId>dify-java-client</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <name>dify-java-client</name>
     <description>Java Client for Dify</description>
     <packaging>jar</packaging>
-    <url>https://github.com/imfangs/dify-java-client</url>
+    <url>https://github.com/ferrymo/dify-java-client</url>
 
     <developers>
         <developer>
-            <name>imfangs</name>
-            <email>mafangshuai@126.com</email>
+            <name>ferry mo</name>
+            <email>ferrymcoder@163.com</email>
             <organization>GitHub</organization>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:imfangs/dify-java-client.git</connection>
-        <developerConnection>scm:git:git@github.com:imfangs/dify-java-client.git</developerConnection>
-        <url>https://github.com/imfangs/dify-java-client</url>
+        <connection>scm:git:git@github.com:ferrymo/dify-java-client.git</connection>
+        <developerConnection>scm:git:git@github.com:ferrymo/dify-java-client.git</developerConnection>
+        <url>https://github.com/ferrymo/dify-java-client</url>
         <tag>HEAD</tag>
     </scm>
 

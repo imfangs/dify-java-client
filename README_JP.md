@@ -1,6 +1,6 @@
 # Dify Java Client
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.imfangs/dify-java-client.svg)](https://search.maven.org/search?q=g:io.github.imfangs%20AND%20a:dify-java-client)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.ferrymo/dify-java-client.svg)](https://search.maven.org/search?q=g:io.github.ferrymo%20AND%20a:dify-java-client)
 [![License](https://img.shields.io/github/license/imfangs/dify-java-client)](https://github.com/imfangs/dify-java-client/blob/main/LICENSE)
 [![Java](https://img.shields.io/badge/Java-8%2B-blue)](https://www.java.com)
 
@@ -58,7 +58,7 @@ Dify Java Clientは以下の主要機能を提供します：
 
 ```xml
 <dependency>
-    <groupId>io.github.imfangs</groupId>
+    <groupId>io.github.ferrymo</groupId>
     <artifactId>dify-java-client</artifactId>
     <version>1.2.0</version>
 </dependency>
@@ -67,7 +67,7 @@ Dify Java Clientは以下の主要機能を提供します：
 ### Gradle
 
 ```groovy
-implementation 'io.github.imfangs:dify-java-client:1.2.0'
+implementation 'io.github.ferrymo:dify-java-client:1.2.0'
 ```
 
 ## クイックスタート

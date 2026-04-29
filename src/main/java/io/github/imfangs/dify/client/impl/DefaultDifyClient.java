@@ -18,9 +18,11 @@ import okhttp3.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -33,6 +35,8 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
     // 流式响应相关常量
     private static final String DATA_PREFIX = "data:";
     private static final String PING_EVENT = "event: ping";
+    private static final Set<EventType> CHAT_TERMINAL_EVENTS = EnumSet.of(EventType.MESSAGE_END, EventType.ERROR);
+    private static final Set<EventType> WORKFLOW_TERMINAL_EVENTS = EnumSet.of(EventType.WORKFLOW_FINISHED, EventType.ERROR);
 
     // API 路径常量
     // 对话型应用相关路径
@@ -108,7 +112,7 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
         message.setResponseMode(ResponseMode.STREAMING);
 
         // 执行流式请求
-        executeStreamRequest(CHAT_MESSAGES_PATH, message, (line) -> processStreamLine(line, callback, (data, eventType) -> {
+        executeStreamRequest(CHAT_MESSAGES_PATH, message, (line) -> processStreamLine(line, callback, CHAT_TERMINAL_EVENTS, (data, eventType) -> {
             StreamEventDispatcher.dispatchChatEvent(callback, data, eventType);
         }), callback::onException);
     }
@@ -120,7 +124,7 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
         message.setResponseMode(ResponseMode.STREAMING);
 
         // 执行流式请求
-        executeStreamRequest(CHAT_MESSAGES_PATH, message, (line) -> processStreamLine(line, callback, (data, eventType) -> {
+        executeStreamRequest(CHAT_MESSAGES_PATH, message, (line) -> processStreamLine(line, callback, WORKFLOW_TERMINAL_EVENTS, (data, eventType) -> {
             StreamEventDispatcher.dispatchChatFlowEvent(callback, data, eventType);
         }), callback::onException);
     }
@@ -287,7 +291,7 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
         request.setResponseMode(ResponseMode.STREAMING);
 
         // 执行流式请求
-        executeStreamRequest(COMPLETION_MESSAGES_PATH, request, (line) -> processStreamLine(line, callback, (data, eventType) -> {
+        executeStreamRequest(COMPLETION_MESSAGES_PATH, request, (line) -> processStreamLine(line, callback, CHAT_TERMINAL_EVENTS, (data, eventType) -> {
             // 分发事件
             StreamEventDispatcher.dispatchCompletionEvent(callback, data);
         }), callback::onException);
@@ -323,7 +327,7 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
         request.setResponseMode(ResponseMode.STREAMING);
 
         // 执行流式请求
-        executeStreamRequest(WORKFLOWS_RUN_PATH, request, (line) -> processStreamLine(line, callback, (data, eventType) -> {
+        executeStreamRequest(WORKFLOWS_RUN_PATH, request, (line) -> processStreamLine(line, callback, WORKFLOW_TERMINAL_EVENTS, (data, eventType) -> {
             // 分发事件
             StreamEventDispatcher.dispatchWorkflowEvent(callback, data);
         }), callback::onException);
@@ -467,10 +471,11 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
      *
      * @param line           数据行
      * @param callback       回调接口
+     * @param terminalEvents 流式读取终止事件
      * @param eventProcessor 事件处理器
      * @return 是否继续处理
      */
-    private boolean processStreamLine(String line, BaseStreamCallback callback, EventProcessor eventProcessor) {
+    private boolean processStreamLine(String line, BaseStreamCallback callback, Set<EventType> terminalEvents, EventProcessor eventProcessor) {
         if(line == null || line.trim().isEmpty()){
             return true;
         }
@@ -487,11 +492,10 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
 
                 // 处理事件
                 eventProcessor.process(data, baseEvent.getEvent());
-                // 如果是结束类事件，则停止继续读取，主动关闭连接
+                // 不同 Dify 应用类型的最终事件不同，例如 Chatflow 的 message_end 后仍会继续发送 workflow_finished。
                 String eventTypeStr = baseEvent.getEvent();
                 EventType eventType = eventTypeStr != null ? EventType.fromValue(eventTypeStr) : null;
-                if (eventType == EventType.MESSAGE_END
-                        || eventType == EventType.ERROR) {
+                if (eventType != null && terminalEvents.contains(eventType)) {
                     return false;
                 }
             } catch (Exception e) {

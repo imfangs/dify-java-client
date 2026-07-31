@@ -18,6 +18,7 @@ import okhttp3.*;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,8 +34,9 @@ import java.util.function.Consumer;
 public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient {
 
     // 流式响应相关常量
-    private static final Set<EventType> CHAT_TERMINAL_EVENTS = EnumSet.of(EventType.MESSAGE_END, EventType.ERROR);
-    private static final Set<EventType> WORKFLOW_TERMINAL_EVENTS = EnumSet.of(EventType.WORKFLOW_FINISHED, EventType.ERROR);
+    private static final Set<EventType> CHAT_TERMINAL_EVENTS = EnumSet.of(EventType.MESSAGE_END);
+    private static final Set<EventType> NO_TERMINAL_EVENTS = Collections.emptySet();
+    private static final Set<EventType> WORKFLOW_TERMINAL_EVENTS = EnumSet.of(EventType.WORKFLOW_FINISHED);
 
     // API 路径常量
     // 对话型应用相关路径
@@ -111,9 +113,9 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
         message.setResponseMode(ResponseMode.STREAMING);
 
         // 执行流式请求
-        executeStreamRequest(CHAT_MESSAGES_PATH, message, (line) -> processStreamLine(line, callback, CHAT_TERMINAL_EVENTS, (data, eventType) -> {
+        executeStreamRequest(CHAT_MESSAGES_PATH, message, (line) -> processStreamLineWithResult(line, callback, CHAT_TERMINAL_EVENTS, (data, eventType) -> {
             StreamEventDispatcher.dispatchChatEvent(callback, data, eventType);
-        }), callback::onException);
+        }), callback::onException, callback::onStreamComplete);
     }
 
     @Override
@@ -122,10 +124,19 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
         // 确保请求模式为流式
         message.setResponseMode(ResponseMode.STREAMING);
 
-        // 执行流式请求
-        executeStreamRequest(CHAT_MESSAGES_PATH, message, (line) -> processStreamLine(line, callback, WORKFLOW_TERMINAL_EVENTS, (data, eventType) -> {
-            StreamEventDispatcher.dispatchChatFlowEvent(callback, data, eventType);
-        }), callback::onException);
+        ChatflowTerminalState terminalState = new ChatflowTerminalState();
+        executeStreamRequest(CHAT_MESSAGES_PATH, message, (line) -> {
+            StreamLineResult result = processStreamLineWithResult(line, callback, NO_TERMINAL_EVENTS, (data, eventType) -> {
+                StreamEventDispatcher.dispatchChatFlowEvent(callback, data, eventType);
+                terminalState.record(eventType);
+            });
+            if (result != StreamLineResult.CONTINUE) {
+                return result;
+            }
+            return terminalState.hasReceivedAllTerminalEvents()
+                    ? StreamLineResult.COMPLETE
+                    : StreamLineResult.CONTINUE;
+        }, callback::onException, callback::onStreamComplete);
     }
 
     @Override
@@ -290,10 +301,10 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
         request.setResponseMode(ResponseMode.STREAMING);
 
         // 执行流式请求
-        executeStreamRequest(COMPLETION_MESSAGES_PATH, request, (line) -> processStreamLine(line, callback, CHAT_TERMINAL_EVENTS, (data, eventType) -> {
+        executeStreamRequest(COMPLETION_MESSAGES_PATH, request, (line) -> processStreamLineWithResult(line, callback, CHAT_TERMINAL_EVENTS, (data, eventType) -> {
             // 分发事件
             StreamEventDispatcher.dispatchCompletionEvent(callback, data);
-        }), callback::onException);
+        }), callback::onException, callback::onStreamComplete);
     }
 
     @Override
@@ -326,10 +337,10 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
         request.setResponseMode(ResponseMode.STREAMING);
 
         // 执行流式请求
-        executeStreamRequest(WORKFLOWS_RUN_PATH, request, (line) -> processStreamLine(line, callback, WORKFLOW_TERMINAL_EVENTS, (data, eventType) -> {
+        executeStreamRequest(WORKFLOWS_RUN_PATH, request, (line) -> processStreamLineWithResult(line, callback, WORKFLOW_TERMINAL_EVENTS, (data, eventType) -> {
             // 分发事件
             StreamEventDispatcher.dispatchWorkflowEvent(callback, data);
-        }), callback::onException);
+        }), callback::onException, callback::onStreamComplete);
     }
 
     @Override
@@ -408,9 +419,9 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
             params.put("continue_on_pause", continueOnPause);
         }
         String url = buildUrlWithParams(WORKFLOW_EVENTS_PATH + "/" + workflowRunId.trim() + "/events", params);
-        executeGetStreamRequest(url, (line) -> processStreamLine(line, callback, WORKFLOW_TERMINAL_EVENTS, (data, eventType) -> {
+        executeGetStreamRequest(url, (line) -> processStreamLineWithResult(line, callback, WORKFLOW_TERMINAL_EVENTS, (data, eventType) -> {
             StreamEventDispatcher.dispatchWorkflowEvent(callback, data);
-        }), callback::onException);
+        }), callback::onException, callback::onStreamComplete);
     }
 
     /**
@@ -553,5 +564,29 @@ public class DefaultDifyClient extends DifyBaseClientImpl implements DifyClient 
     private String getFileExtension(String fileName) {
         int lastDotIndex = fileName.lastIndexOf('.');
         return lastDotIndex > 0 ? fileName.substring(lastDotIndex + 1) : "";
+    }
+
+    /**
+     * 跟踪 Chatflow 的两个终止事件。
+     *
+     * <p>不同 Dify 版本可能以不同顺序发送 {@code message_end} 和
+     * {@code workflow_finished}。只有两者都收到时，客户端才主动停止读取；若连接先关闭，
+     * 则由通用的流结束回调处理。</p>
+     */
+    private static final class ChatflowTerminalState {
+        private boolean messageEndReceived;
+        private boolean workflowFinishedReceived;
+
+        private void record(String eventType) {
+            if (EventType.MESSAGE_END.getValue().equals(eventType)) {
+                messageEndReceived = true;
+            } else if (EventType.WORKFLOW_FINISHED.getValue().equals(eventType)) {
+                workflowFinishedReceived = true;
+            }
+        }
+
+        private boolean hasReceivedAllTerminalEvents() {
+            return messageEndReceived && workflowFinishedReceived;
+        }
     }
 }

@@ -635,7 +635,7 @@ public class DefaultDifyDatasetsClient extends AbstractDifyClient implements Dif
     private static final String PIPELINE_DATASOURCE_NODES_PATH = "/pipeline/datasource/nodes";
     private static final String PIPELINE_RUN_PATH = "/pipeline/run";
     private static final String PIPELINE_FILE_UPLOAD_PATH = "/datasets/pipeline/file-upload";
-    private static final Set<EventType> PIPELINE_TERMINAL_EVENTS = EnumSet.of(EventType.WORKFLOW_FINISHED, EventType.ERROR);
+    private static final Set<EventType> PIPELINE_TERMINAL_EVENTS = EnumSet.of(EventType.WORKFLOW_FINISHED);
 
     @Override
     public List<DatasourcePluginResponse> listPipelineDatasourcePlugins(String datasetId, Boolean isPublished) throws IOException, DifyApiException {
@@ -676,9 +676,10 @@ public class DefaultDifyDatasetsClient extends AbstractDifyClient implements Dif
         log.debug("运行 Pipeline 数据源节点: datasetId={}, nodeId={}, request={}", datasetId, nodeId, request);
         String path = DATASETS_PATH + "/" + datasetId + PIPELINE_DATASOURCE_NODES_PATH + "/" + nodeId + "/run";
         executeStreamRequest(path, request,
-                (line) -> processStreamLine(line, callback, PIPELINE_TERMINAL_EVENTS,
+                (line) -> processStreamLineWithResult(line, callback, PIPELINE_TERMINAL_EVENTS,
                         (data, eventType) -> StreamEventDispatcher.dispatchWorkflowEvent(callback, data)),
-                callback::onException);
+                callback::onException,
+                callback::onStreamComplete);
     }
 
     @Override
@@ -719,9 +720,10 @@ public class DefaultDifyDatasetsClient extends AbstractDifyClient implements Dif
         log.debug("运行 Pipeline（流式模式）: datasetId={}", datasetId);
         String path = DATASETS_PATH + "/" + datasetId + PIPELINE_RUN_PATH;
         executeStreamRequest(path, request,
-                (line) -> processStreamLine(line, callback, PIPELINE_TERMINAL_EVENTS,
+                (line) -> processStreamLineWithResult(line, callback, PIPELINE_TERMINAL_EVENTS,
                         (data, eventType) -> StreamEventDispatcher.dispatchWorkflowEvent(callback, data)),
-                callback::onException);
+                callback::onException,
+                callback::onStreamComplete);
     }
 
     @Override

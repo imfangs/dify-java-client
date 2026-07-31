@@ -33,4 +33,13 @@ public interface BaseStreamCallback {
     default void onException(Throwable throwable) {
     }
 
+    /**
+     * SDK 已完成对 SSE 响应的读取。
+     *
+     * <p>当收到客户端定义的终止事件，或服务端正常关闭 SSE 连接时触发。该回调仅表示协议流读取结束，
+     * 不表示 Dify 工作流或调用方业务处理成功。Dify {@code error} 事件和网络异常不会触发该回调。</p>
+     */
+    default void onStreamComplete() {
+    }
+
 }

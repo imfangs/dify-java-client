@@ -638,4 +638,4 @@ This project is licensed under the [Apache License 2.0](LICENSE).
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=imfangs/dify-java-client&type=Date)](https://www.star-history.com/#imfangs/dify-java-client&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=imfangs/dify-java-client&type=Date)](https://star-history.dera.page/#imfangs/dify-java-client&Date)

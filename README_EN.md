@@ -689,6 +689,8 @@ Datasource nodes report `onDatasourceProcessing`, `onDatasourceCompleted` and
 `onDatasourceError`; completion events may occur once per page before EOF.
 See [CURRENT.md](CURRENT.md) for contract sources and verification limits.
 
+See [Publishing from another computer](docs/PUBLISHING.md) for Actions and credential recovery.
+
 ## Contributing
 
 Contributions of code, issue reports, or improvement suggestions are welcome. Please participate in project development through GitHub Issues or Pull Requests.

@@ -685,6 +685,8 @@ mvn -B -ntp clean verify
 データソースの通知は `onDatasourceProcessing`、`onDatasourceCompleted`、`onDatasourceError` で受信します。
 `datasource_completed` はページごとに複数回届く場合があります。根拠と検証範囲は [CURRENT.md](CURRENT.md) を参照してください。
 
+別のコンピューターからの公開、Actions、認証情報の復元については[公開ガイド](docs/PUBLISHING.md)を参照してください。
+
 ## 貢献
 
 コード貢献、問題報告、または改善提案を歓迎します。GitHub IssuesまたはPull Requestsを通じてプロジェクト開発に参加してください。

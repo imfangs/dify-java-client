@@ -137,3 +137,35 @@ for `PUBLISHED` instead of stopping at validation. Its eight isolated scenario
 groups, shell syntax and diff checks passed. The release tag remains unchanged.
 A corrupt local cached JUnit BOM used by Javadoc tooling was also replaced with
 the checksum-verified Maven Central copy; no published library source changed.
+
+
+## Portable publication (2026-10-09)
+
+- Encrypted backup: [imfangs/dify-release-vault](https://github.com/imfangs/dify-release-vault),
+  verified PRIVATE. It contains the scoped Central token pair and the signing key
+  identity, encrypted with GnuPG AES256. No GitHub login token or unrelated Maven
+  server configuration is included.
+- Recovery passphrase: saved to Apple Passwords as **Dify Release Vault Recovery**,
+  website `dify-release-vault.invalid`. The CSV import was confirmed and its temporary
+  file deleted. The recovery passphrase is not stored in either Git repository.
+- Recovery was tested with the actual encrypted backup in a clean temporary GPG
+  home and minimal settings. Local signature verification, read-only Central
+  authentication and `mvn -s <restored-settings> -Prelease clean verify` all passed
+  (51 tests, four signed files). The original Maven settings were not changed.
+- The restore tool has 21 synthetic tests and an independent bounded security
+  review. It rejects unsafe parent directories, overwrites and GPG socket paths
+  that exceed the operating system's limit. A long macOS TMPDIR issue found during
+  actual recovery was reproduced and fixed.
+- The `release` GitHub environment is configured with `CENTRAL_USERNAME`,
+  `CENTRAL_TOKEN`, `GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`, and the public fingerprint
+  variable. Environment deployment policy allows the `main` branch only.
+- Manual Actions publishing is implemented in `.github/workflows/release.yml`.
+  It defaults to dry-run and checks an existing tag, main ancestry, version and
+  previous publication. It records upload attempts before transmission and never
+  blindly repeats them. The helper's 19 isolated tests and actionlint passed;
+  read-only preparation for 1.7.0 returned `already_published` without an upload.
+- Setup and usage: [docs/PUBLISHING.md](docs/PUBLISHING.md). Hosted workflow execution
+  and cross-device password synchronization are separate verification boundaries.
+  The private GitHub clone at `65a72d010d25b6f2a9d1e7db2502d7a28ca9c8cc`
+  matched the encrypted data and tool byte-for-byte and passed actual recovery/signing.
+  No new Maven version was published during this setup.

@@ -719,6 +719,8 @@ mvn -B -ntp clean verify
 数据源节点通过 `onDatasourceProcessing`、`onDatasourceCompleted`、`onDatasourceError` 回调交付结果；
 其中 `datasource_completed` 可逐页出现多次。维护依据与验证范围见 [CURRENT.md](CURRENT.md)。
 
+跨电脑发布、GitHub Actions 和凭证恢复见[发布指南](docs/PUBLISHING.md)。
+
 ## 贡献
 
 欢迎贡献代码、报告问题或提出改进建议。请通过 GitHub Issues 或 Pull Requests 参与项目开发。

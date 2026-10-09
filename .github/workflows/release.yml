@@ -1,0 +1,106 @@
+name: Manual release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing stable tag version, for example 1.8.0 (without v)
+        required: true
+        type: string
+      dry_run:
+        description: Validate and build only; do not import signing keys or publish
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: release
+    permissions:
+      contents: write # Draft attempt marker, sanitized receipt, final GitHub Release.
+    steps:
+      - name: Load release automation from main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+          path: automation
+      - name: Validate tag, ancestry, POM, release notes and previous publication
+        id: prepare
+        working-directory: automation
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/actions-release.py prepare --version "$RELEASE_VERSION" --output "$RUNNER_TEMP/release-output"
+      - name: Already published
+        if: steps.prepare.outputs.state == 'already_published'
+        run: echo 'This Maven version already exists. No upload or release change will be attempted.'
+      - name: Check out exact release commit
+        if: steps.prepare.outputs.state == 'ready'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ steps.prepare.outputs.commit }}
+          persist-credentials: false
+          path: release-source
+      - name: Set up JDK 21 for local verification
+        if: steps.prepare.outputs.state == 'ready'
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build the tagged source and run local tests
+        if: steps.prepare.outputs.state == 'ready'
+        working-directory: release-source
+        run: mvn -B -ntp clean verify
+      - name: Prepare isolated signing directory
+        if: steps.prepare.outputs.state == 'ready' && !inputs.dry_run
+        run: |
+          install -d -m 700 "$RUNNER_TEMP/release-gnupg" "$RUNNER_TEMP/release-auth"
+          echo "GNUPGHOME=$RUNNER_TEMP/release-gnupg" >> "$GITHUB_ENV"
+      - name: Configure Central credentials and import signing key
+        if: steps.prepare.outputs.state == 'ready' && !inputs.dry_run
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_TOKEN
+          settings-path: ${{ runner.temp }}/release-auth
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+      - name: Publish once, wait for Central, then publish GitHub Release
+        if: steps.prepare.outputs.state == 'ready' && !inputs.dry_run
+        working-directory: release-source
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_FINGERPRINT: ${{ vars.GPG_FINGERPRINT }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          chmod 600 "$RUNNER_TEMP/release-auth/settings.xml"
+          python3 "$GITHUB_WORKSPACE/automation/scripts/actions-release.py" publish \
+            --output "$RUNNER_TEMP/release-output" --settings "$RUNNER_TEMP/release-auth/settings.xml"
+      - name: Keep sanitized receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-receipt-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/release-output/release-receipt.json
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Remove temporary Maven settings
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release-auth/settings.xml"

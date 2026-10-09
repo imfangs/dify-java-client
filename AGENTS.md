@@ -37,6 +37,10 @@ Read the relevant README examples and implementation before changing a feature.
 
 ## Release
 
+For publishing from another computer, GitHub Actions setup, recovery, or an
+interrupted upload, read [docs/PUBLISHING.md](docs/PUBLISHING.md). The manual
+workflow defaults to dry-run and uses the `release` environment on `main`.
+
 Development uses a SNAPSHOT version; README installation coordinates identify
 the latest published release. Update all three READMEs when publishing a version.
 `scripts/release.sh` verifies before creating a tag. Signing uses `-Prelease`.

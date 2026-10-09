@@ -7,7 +7,7 @@ Updated: 2026-10-09. This file is the implementation and verification handoff.
 - Started at `07b922f00eb3b37ada9cd2696c89153614fe675b`, matching `origin/main`,
   with a clean worktree. The latest release at maintenance start was `v1.6.0` (2026-07-10).
 - The maintenance snapshot was committed as `b4b07fcc4e08c6362470be715a8c652e4bee7e0f`.
-  Version `1.7.0` is now prepared for publication, explicitly requested on 2026-10-09.
+  Version `1.7.0` was published on 2026-10-09 after the explicit release request.
   POM and all three README installation examples use the release version.
 - GitHub had no open issues. PR [#165](https://github.com/imfangs/dify-java-client/pull/165)
   provides the Chatflow terminal-order fix and stream completion callback;
@@ -107,7 +107,33 @@ No live Dify integration test was performed. CI is configured for JDK
 
 ## Release 1.7.0
 
-Publication is in progress. At preflight, the remote main branch still pointed
-to `07b922f00eb3b37ada9cd2696c89153614fe675b`, and neither GitHub tag/release
-`v1.7.0` nor the Maven Central 1.7.0 POM existed. Final publication receipts
-will be recorded after read-back.
+Published on 2026-10-09. Machine-readable receipt and all artifact SHA-256
+values: [docs/releases/1.7.0.json](docs/releases/1.7.0.json).
+
+- Release commit and remote tag: `4f15f482b3795b3bf42e5bde43758b6ed149b305`.
+- [GitHub Release v1.7.0](https://github.com/imfangs/dify-java-client/releases/tag/v1.7.0),
+  ID `407583253`, published `2026-10-09T06:27:33Z`; read back as public,
+  non-prerelease, and latest release.
+- Maven coordinate: `io.github.imfangs:dify-java-client:1.7.0`.
+  Central deployment `89e6b172-4245-4e1a-90ff-bc6dd61c540e` was read back as
+  `PUBLISHED`. The binary, sources, Javadoc and POM were downloaded from the
+  public repository; all four SHA-256 values match the upload, and all four
+  GPG signatures verify. The 141 Java sources match the release tag exactly.
+- The formal release was rebuilt and signed on JDK 21, with all 51 tests passing.
+  Prior equivalent source verification on JDK 8/21/26 is recorded above.
+- [Hosted CI run](https://github.com/imfangs/dify-java-client/actions/runs/37892572270)
+  did not execute any job steps because the hosted runner account was unavailable.
+  Remote CI success is not claimed; inspect run annotations when restoring CI.
+
+The upload was submitted only once. Central plugin 0.7.0 reported a local parse
+failure when the successful response gained a `warnings` field; the independent
+status read-back and public downloads confirmed publication. Do not rerun the
+upload or attempt to replace this immutable release.
+
+Post-release tooling follow-up (does not change the published artifacts): the
+Central plugin is now 0.11.0, verified on JDK 8 against the actual response,
+nonempty/missing warnings and future unknown fields. The release script waits
+for `PUBLISHED` instead of stopping at validation. Its eight isolated scenario
+groups, shell syntax and diff checks passed. The release tag remains unchanged.
+A corrupt local cached JUnit BOM used by Javadoc tooling was also replaced with
+the checksum-verified Maven Central copy; no published library source changed.

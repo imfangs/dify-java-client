@@ -215,15 +215,14 @@ fi
 
 # 发布到 Maven Central
 if [[ "${DO_PUBLISH}" -eq 1 ]]; then
-  log "执行 Maven 发布：-Prelease verify central-publishing:publish"
+  log "执行 Maven 发布并等待 PUBLISHED：-Prelease -DwaitUntil=PUBLISHED verify central-publishing:publish"
   if [[ "${DRY_RUN}" -eq 1 ]]; then
-    echo "DRY-RUN: mvn -B -ntp -Prelease verify central-publishing:publish"
+    echo "DRY-RUN: mvn -B -ntp -Prelease -DwaitUntil=PUBLISHED verify central-publishing:publish"
   else
-    mvn -B -ntp -Prelease verify central-publishing:publish
+    mvn -B -ntp -Prelease -DwaitUntil=PUBLISHED verify central-publishing:publish
   fi
 else
   warn "已禁用发布（--no-publish）。"
 fi
 
 log "完成：${TAG}"
-

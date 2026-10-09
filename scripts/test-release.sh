@@ -34,7 +34,7 @@ case " $* " in
   *' clean verify '*)
     if [[ "${RELEASE_TEST_BUILD_FAIL}" == 1 ]]; then exit 17; fi
     ;;
-  *' -Prelease verify central-publishing:publish '*) ;;
+  *' -Prelease -DwaitUntil=PUBLISHED verify central-publishing:publish '*) ;;
   *) echo "Unexpected Maven command" >&2; exit 98;;
 esac
 STUB
@@ -135,7 +135,7 @@ awk '
   /^mvn .* clean verify$/ { build = NR }
   /^git tag -a / { tag = NR }
   /^git push / { push = NR }
-  /^mvn .* -Prelease verify central-publishing:publish$/ { publish = NR }
+  /^mvn .* -Prelease -DwaitUntil=PUBLISHED verify central-publishing:publish$/ { publish = NR }
   END { exit !(build && build < tag && tag < push && push < publish) }
 ' "${RELEASE_TEST_LOG}" || fail 'incorrect verify/tag/push/publish order'
 echo 'PASS: verification precedes the tag, push and release-profile publication'
@@ -143,7 +143,7 @@ echo 'PASS: verification precedes the tag, push and release-profile publication'
 new_repo no-push
 run_release 0 -v 1.2.3 --skip-remote-check --no-push -y
 if grep -q '^git push ' "${RELEASE_TEST_LOG}"; then fail '--no-push pushed a tag'; fi
-grep -Fq -- '-Prelease verify central-publishing:publish' "${RELEASE_TEST_LOG}" || fail '--no-push unexpectedly disabled Maven publication'
+grep -Fq -- '-Prelease -DwaitUntil=PUBLISHED verify central-publishing:publish' "${RELEASE_TEST_LOG}" || fail '--no-push unexpectedly disabled Maven publication'
 
 new_repo no-publish
 run_release 0 -v 1.2.3 --skip-remote-check --no-publish -y

@@ -1,0 +1,73 @@
+{
+  "version": "1.7.0",
+  "verifiedAt": "2026-10-09T06:29:19.061960+00:00",
+  "releaseCommit": "4f15f482b3795b3bf42e5bde43758b6ed149b305",
+  "githubRelease": {
+    "databaseId": 407583253,
+    "isDraft": false,
+    "isPrerelease": false,
+    "publishedAt": "2026-10-09T06:27:33Z",
+    "tagName": "v1.7.0",
+    "url": "https://github.com/imfangs/dify-java-client/releases/tag/v1.7.0"
+  },
+  "mavenCentral": {
+    "deploymentId": "89e6b172-4245-4e1a-90ff-bc6dd61c540e",
+    "deploymentName": "dify-java-client-1.7.0",
+    "deploymentState": "PUBLISHED",
+    "purls": [
+      "pkg:maven/io.github.imfangs/dify-java-client@1.7.0"
+    ]
+  },
+  "artifacts": [
+    {
+      "artifact": "dify-java-client-1.7.0.pom",
+      "sha256": "9424c8ae78c77c8ded02602744c84ba246778a9357ce09b1b8a8a4163938955c",
+      "matchesUploaded": true,
+      "signature": "verified",
+      "url": "https://repo.maven.apache.org/maven2/io/github/imfangs/dify-java-client/1.7.0/dify-java-client-1.7.0.pom"
+    },
+    {
+      "artifact": "dify-java-client-1.7.0-sources.jar",
+      "sha256": "655c238c5565724680f3489e7adf486db79130d8b7cbc192820fe72a339d11f4",
+      "matchesUploaded": true,
+      "signature": "verified",
+      "url": "https://repo.maven.apache.org/maven2/io/github/imfangs/dify-java-client/1.7.0/dify-java-client-1.7.0-sources.jar"
+    },
+    {
+      "artifact": "dify-java-client-1.7.0-javadoc.jar",
+      "sha256": "3e2d2100d26fef2bea191e7d2d2022374d9fb49b35e4342237aa9cd06370743a",
+      "matchesUploaded": true,
+      "signature": "verified",
+      "url": "https://repo.maven.apache.org/maven2/io/github/imfangs/dify-java-client/1.7.0/dify-java-client-1.7.0-javadoc.jar"
+    },
+    {
+      "artifact": "dify-java-client-1.7.0.jar",
+      "sha256": "68bd51a4fdd2a3991e558ef08bce26089b7bae595b7014a561a612dab5f4d1bc",
+      "matchesUploaded": true,
+      "signature": "verified",
+      "url": "https://repo.maven.apache.org/maven2/io/github/imfangs/dify-java-client/1.7.0/dify-java-client-1.7.0.jar"
+    }
+  ],
+  "validation": {
+    "localJdks": [
+      "8u412",
+      "21.0.7",
+      "26.0.2.1"
+    ],
+    "testsPerJdk": 51,
+    "failures": 0,
+    "errors": 0,
+    "releaseSignedBuildJdk": "21.0.7",
+    "bytecodeMajor": 52,
+    "sourceFilesMatchedToTag": 141,
+    "liveDifyIntegration": false,
+    "remoteCi": {
+      "runId": 37892572270,
+      "url": "https://github.com/imfangs/dify-java-client/actions/runs/37892572270",
+      "executed": false,
+      "status": "jobs did not start; hosted runner account unavailable"
+    },
+    "multiJdkSourceCommit": "b4b07fcc4e08c6362470be715a8c652e4bee7e0f",
+    "signedReleaseSourceCommit": "4f15f482b3795b3bf42e5bde43758b6ed149b305"
+  }
+}

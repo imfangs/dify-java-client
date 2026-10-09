@@ -42,3 +42,7 @@ the latest published release. Update all three READMEs when publishing a version
 `scripts/release.sh` verifies before creating a tag. Signing uses `-Prelease`.
 Push, GitHub Release, Maven Central publication, and issue/PR messages are
 separate external actions; follow the task's authorization and read back results.
+Record Central's deployment ID immediately after upload. If a later wait or
+response parse fails, query that deployment before retrying; the upload may
+already be published. Confirm `PUBLISHED` and public artifact checksums, then
+record the receipt under `docs/releases/` and update CURRENT.md.

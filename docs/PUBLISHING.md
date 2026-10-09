@@ -126,8 +126,11 @@ Actions' temporary `GITHUB_TOKEN` is not a portable credential to back up.
 ## Verification status and action sources
 
 As of **2026-10-09**, this Actions entry was checked locally with isolated Git
-repositories and simulated Maven/GitHub/Central responses. Hosted runner availability prevented a cloud execution. Unlock Actions first, then run
-a dry run; local tests are not evidence of a successful hosted release.
+repositories and simulated Maven/GitHub/Central responses. The configured manual
+[dry-run attempt](https://github.com/imfangs/dify-java-client/actions/runs/37897263834)
+was accepted, but an account restriction prevented any job steps from starting.
+Restore Actions availability, then run a dry run; local tests are not evidence
+of a successful hosted release.
 Version **1.7.0 is already published** and must not be uploaded again.
 The read-only preparation command was also run against its actual tag and public
 Central POM: it returned `already_published` without calling Maven or writing to GitHub.

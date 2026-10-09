@@ -168,4 +168,10 @@ the checksum-verified Maven Central copy; no published library source changed.
   and cross-device password synchronization are separate verification boundaries.
   The private GitHub clone at `65a72d010d25b6f2a9d1e7db2502d7a28ca9c8cc`
   matched the encrypted data and tool byte-for-byte and passed actual recovery/signing.
-  No new Maven version was published during this setup.
+  Manual dry-run [37897263834](https://github.com/imfangs/dify-java-client/actions/runs/37897263834)
+  was submitted for 1.7.0 at commit `95eb4bcfde7803e765035044838a79b2bd6ec3c2`.
+  It was accepted, but the hosted runner account restriction stopped the job before
+  any steps executed. Cloud execution remains unverified; no upload occurred.
+  The task-owned plaintext recovery-key file, restored settings, temporary GPG
+  keyrings and clone were removed after verification. The Apple Passwords record
+  and encrypted private backup are retained. No new Maven version was published.

@@ -1,5 +1,6 @@
 package io.github.imfangs.dify.client.event;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,6 +15,16 @@ import java.util.List;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class MessageEvent extends BaseMessageEvent {
+
+    /**
+     * 兼容文本块事件中的 id 字段，序列化仍使用 message_id。
+     */
+    @Override
+    @JsonProperty("message_id")
+    @JsonAlias("id")
+    public void setMessageId(String messageId) {
+        super.setMessageId(messageId);
+    }
 
     /**
      * LLM 返回文本块内容

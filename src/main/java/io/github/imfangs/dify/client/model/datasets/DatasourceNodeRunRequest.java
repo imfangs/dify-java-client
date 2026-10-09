@@ -27,7 +27,7 @@ public class DatasourceNodeRunRequest {
     private Map<String, Object> inputs;
 
     /**
-     * 数据源类型（local_file / online_document / website_crawl / online_drive）
+     * 数据源类型（online_document / website_crawl / online_drive）；本地文件使用 Pipeline 文件上传接口
      */
     @JsonProperty("datasource_type")
     private String datasourceType;

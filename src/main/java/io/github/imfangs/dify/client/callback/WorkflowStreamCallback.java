@@ -47,6 +47,31 @@ public interface WorkflowStreamCallback extends BaseStreamCallback {
     }
 
     /**
+     * Pipeline 数据源节点处理进度。
+     *
+     * @param event 事件数据
+     */
+    default void onDatasourceProcessing(DatasourceProcessingEvent event) {
+    }
+
+    /**
+     * Pipeline 数据源节点返回一批结果；分页时可触发多次。
+     * 整个流结束由 {@link #onStreamComplete()} 通知。
+     *
+     * @param event 事件数据
+     */
+    default void onDatasourceCompleted(DatasourceCompletedEvent event) {
+    }
+
+    /**
+     * Pipeline 数据源节点运行失败。错误结束不触发 {@link #onStreamComplete()}。
+     *
+     * @param event 事件数据
+     */
+    default void onDatasourceError(DatasourceErrorEvent event) {
+    }
+
+    /**
      * 迭代器开始执行事件
      *
      * @param event 事件数据

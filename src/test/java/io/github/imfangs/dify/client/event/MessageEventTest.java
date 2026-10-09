@@ -1,7 +1,10 @@
 package io.github.imfangs.dify.client.event;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +17,59 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MessageEventTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    public void testCanonicalMessageIdDeserialization() throws Exception {
+        MessageEvent event = objectMapper.readValue(
+                "{\"event\":\"message\",\"message_id\":\"msg-canonical\",\"answer\":\"hello\"}",
+                MessageEvent.class);
+
+        assertEquals("msg-canonical", event.getMessageId());
+        assertEquals("hello", event.getAnswer());
+    }
+
+    @Test
+    public void testMessageIdAndIdCanCoexist() throws Exception {
+        MessageEvent event = objectMapper.readValue(
+                "{\"event\":\"message\",\"message_id\":\"msg-123\",\"id\":\"msg-123\"}",
+                MessageEvent.class);
+
+        assertEquals("msg-123", event.getMessageId());
+    }
+
+    @Test
+    public void testIdAliasSerializesAsCanonicalMessageId() throws Exception {
+        MessageEvent event = objectMapper.readValue(
+                "{\"event\":\"message\",\"id\":\"msg-legacy\"}", MessageEvent.class);
+
+        JsonNode json = objectMapper.readTree(objectMapper.writeValueAsString(event));
+
+        assertEquals("msg-legacy", json.get("message_id").asText());
+        assertFalse(json.has("id"));
+        assertFalse(json.has("messageId"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{\"event\":\"message\"}",
+            "{\"event\":\"message\",\"message_id\":null}",
+            "{\"event\":\"message\",\"id\":null}"
+    })
+    public void testMissingOrNullMessageIdRemainsNull(String json) throws Exception {
+        MessageEvent event = objectMapper.readValue(json, MessageEvent.class);
+
+        assertNull(event.getMessageId());
+    }
+
+    @Test
+    public void testAgentThoughtIdRemainsDistinctFromMessageId() throws Exception {
+        AgentThoughtEvent event = objectMapper.readValue(
+                "{\"event\":\"agent_thought\",\"message_id\":\"msg-123\",\"id\":\"thought-456\"}",
+                AgentThoughtEvent.class);
+
+        assertEquals("msg-123", event.getMessageId());
+        assertEquals("thought-456", event.getId());
+    }
 
     @Test
     public void testFromVariableSelectorSerialization() throws Exception {
@@ -87,4 +143,4 @@ public class MessageEventTest {
         // from_variable_selector 应该为 null（向后兼容）
         assertNull(event.getFromVariableSelector());
     }
-} 
+}

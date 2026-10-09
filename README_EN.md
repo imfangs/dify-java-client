@@ -6,6 +6,8 @@
 
 English | [简体中文](README.md) | [日本語](README_JP.md)
 
+The new streaming callbacks on this branch belong to **1.7.0-SNAPSHOT (unreleased)** and require a source build. Installation examples still reference published version 1.6.0.
+
 Dify Java Client is a Java client library for interacting with the [Dify](https://dify.ai) platform. It provides complete support for Dify Application APIs and Knowledge Base APIs, enabling Java developers to easily integrate Dify's generative AI capabilities into their applications.
 
 ## Features
@@ -445,12 +447,15 @@ try (FilePreviewResponse zip = datasetsClient.downloadDocumentsAsZip(datasetId, 
 ```java
 // 1) List datasource nodes configured in the pipeline
 List<DatasourcePluginResponse> nodes = datasetsClient.listPipelineDatasourcePlugins(datasetId, true);
-String startNodeId = nodes.get(0).getNodeId();
+String startNodeId = nodes.stream()
+    .filter(node -> "local_file".equals(node.getDatasourceType()))
+    .findFirst().orElseThrow(() -> new IllegalStateException("Configure a local_file node first"))
+    .getNodeId();
 
 // 2) Upload a file for pipeline processing
 PipelineFileUploadResponse uploaded = datasetsClient.uploadPipelineFile(new java.io.File("./doc.pdf"));
 
-// 3) Run the full pipeline (blocking mode)
+// 3) Submit the published pipeline (returns a JSON queue receipt)
 java.util.Map<String, Object> item = new java.util.HashMap<>();
 item.put("reference", uploaded.getId());
 item.put("name", uploaded.getName());
@@ -465,11 +470,48 @@ PipelineRunRequest runRequest = PipelineRunRequest.builder()
 
 java.util.Map<String, Object> result = datasetsClient.runPipeline(datasetId, runRequest);
 
-// Or streaming
-datasetsClient.runPipelineStream(datasetId, runRequest, callback);
+// SSE is supported for draft pipelines; draft node IDs may differ
+String draftStartNodeId = datasetsClient.listPipelineDatasourcePlugins(datasetId, false).stream()
+    .filter(node -> "local_file".equals(node.getDatasourceType()))
+    .findFirst().orElseThrow(() -> new IllegalStateException("Configure a draft local_file node first"))
+    .getNodeId();
+PipelineRunRequest draftRequest = PipelineRunRequest.builder()
+    .inputs(new java.util.HashMap<>())
+    .datasourceType("local_file")
+    .datasourceInfoList(java.util.Arrays.asList(item))
+    .startNodeId(draftStartNodeId)
+    .isPublished(false)
+    .build();
+datasetsClient.runPipelineStream(datasetId, draftRequest, callback);
 
-// 4) Run a single datasource node (streaming)
-datasetsClient.runPipelineDatasourceNodeStream(datasetId, startNodeId, nodeRequest, callback);
+// 4) Run a configured online_drive node (callbacks below require 1.7.0)
+DatasourcePluginResponse driveNode = nodes.stream()
+    .filter(node -> "online_drive".equals(node.getDatasourceType()))
+    .findFirst().orElseThrow(() -> new IllegalStateException("Configure an online_drive node first"));
+java.util.Map<String, Object> driveInputs = new java.util.HashMap<>();
+// Fill inputs required by driveNode.getUserInputVariables(); configure credentials in Dify first
+DatasourceNodeRunRequest nodeRequest = DatasourceNodeRunRequest.builder()
+    .inputs(driveInputs)
+    .datasourceType("online_drive")
+    .isPublished(true)
+    .build();
+datasetsClient.runPipelineDatasourceNodeStream(datasetId, driveNode.getNodeId(), nodeRequest,
+    new WorkflowStreamCallback() {
+        @Override
+        public void onDatasourceCompleted(DatasourceCompletedEvent event) {
+            System.out.println(event.getData());
+        }
+
+        @Override
+        public void onDatasourceError(DatasourceErrorEvent event) {
+            System.err.println(event.getError());
+        }
+
+        @Override
+        public void onStreamComplete() {
+            System.out.println("Stream complete");
+        }
+    });
 ```
 
 ### 5. End Users
@@ -483,6 +525,8 @@ System.out.println("external_user_id: " + endUser.getExternalUserId());
 ### 6. Human Input Flow
 
 Dify 1.14.2+ supports inserting Human Input nodes into workflow/chatflow apps that pause execution and wait for a form submission.
+
+Enable WebApp delivery on the Human Input node to retrieve and submit forms through this API; other approval channels may not provide a `form_token`.
 
 ```java
 // 1) Subscribe to a workflow; onHumanInputRequired fires when the run reaches a human-input node
@@ -509,7 +553,8 @@ HumanInputFormSubmitRequest submit = HumanInputFormSubmitRequest.builder()
 client.submitHumanInputForm(formToken, submit);
 
 // 4) Re-subscribe to the resumed workflow events
-workflowClient.streamWorkflowEvents(workflowRunId, "reviewer-alice", true, false, callback);
+// Resume using the original run user, not the reviewer identity
+workflowClient.streamWorkflowEvents(workflowRunId, request.getUser(), true, false, callback);
 ```
 
 ### 7. Reasoning Chunk
@@ -621,6 +666,28 @@ DifyClient client = DifyClientFactory.createClient(config);
     - TTS events
     - Workflow events
     - Error handling
+
+## Development and verification
+
+The working version is **1.7.0-SNAPSHOT (unreleased)**; installation examples above
+still use published version 1.6.0. Building requires Maven 3.9.2+; CI is configured
+for JDK 8, 17, 21, 25 and 26.
+
+```bash
+mvn -B -ntp clean verify
+```
+
+The default build runs local regression tests without Dify credentials or GPG.
+Real-service examples carry the `integration` tag. Configure a dedicated test
+environment in `src/test/resources/dify-test-config.properties`, then explicitly
+run `mvn -Pintegration-tests test`. These tests create, modify or delete Dify data.
+
+Since 1.7.0, `onStreamComplete()` reports normal stream termination after both
+Chatflow terminal events, or server EOF. It does not assert business success;
+API errors, transport failures and parsing errors do not trigger completion.
+Datasource nodes report `onDatasourceProcessing`, `onDatasourceCompleted` and
+`onDatasourceError`; completion events may occur once per page before EOF.
+See [CURRENT.md](CURRENT.md) for contract sources and verification limits.
 
 ## Contributing
 

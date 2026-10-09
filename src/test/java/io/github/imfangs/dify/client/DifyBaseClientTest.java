@@ -8,6 +8,7 @@ import io.github.imfangs.dify.client.model.file.FileUploadRequest;
 import io.github.imfangs.dify.client.model.file.FileUploadResponse;
 import okhttp3.MediaType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -20,6 +21,7 @@ import java.util.Objects;
  * Dify 基础客户端测试类
  * 注意：运行测试前，请确保已经正确配置了 dify-test-config.properties 文件
  */
+@Tag("integration")
 public class DifyBaseClientTest {
     private static final String BASE_URL = DifyTestConfig.getBaseUrl();
     private static final String API_KEY = DifyTestConfig.getChatApiKey();

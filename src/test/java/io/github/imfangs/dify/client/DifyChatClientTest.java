@@ -12,6 +12,7 @@ import io.github.imfangs.dify.client.model.common.Usage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 import java.io.File;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * 对话型应用客户端测试类
  * 注意：运行测试前，请确保已经正确配置了 dify-test-config.properties 文件
  */
+@Tag("integration")
 public class DifyChatClientTest {
     private static final String BASE_URL = DifyTestConfig.getBaseUrl();
     private static final String API_KEY = DifyTestConfig.getChatApiKey();

@@ -31,6 +31,11 @@ public enum EventType {
     NODE_RETRY("node_retry"),             // node 重试
     WORKFLOW_FINISHED("workflow_finished"), // workflow 执行结束
 
+    // Pipeline 数据源节点事件
+    DATASOURCE_PROCESSING("datasource_processing"), // 数据源处理进度
+    DATASOURCE_COMPLETED("datasource_completed"),   // 一批数据源结果（可多次出现）
+    DATASOURCE_ERROR("datasource_error"),           // 数据源运行失败
+
     // 迭代器相关事件
     ITERATION_STARTED("iteration_started"),     // 迭代器开始执行
     ITERATION_NEXT("iteration_next"),           // 迭代器下一次执行

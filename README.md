@@ -6,6 +6,8 @@
 
 [English](README_EN.md) | 简体中文 | [日本語](README_JP.md)
 
+维护分支新增的流式回调属于 **1.7.0-SNAPSHOT（未发布）**，需从源码构建。安装示例仍指向已发布的 1.6.0。
+
 Dify Java Client 是一个用于与 [Dify](https://dify.ai) 平台进行交互的 Java 客户端库。它提供了对 Dify 应用 API 和知识库 API 的完整支持，让 Java 开发者能够轻松地将 Dify 的生成式 AI 能力集成到自己的应用中。
 
 ## 功能特性
@@ -447,12 +449,15 @@ try (FilePreviewResponse zip = datasetsClient.downloadDocumentsAsZip(datasetId, 
 ```java
 // 1) 列出 Pipeline 中已配置的数据源节点
 List<DatasourcePluginResponse> nodes = datasetsClient.listPipelineDatasourcePlugins(datasetId, true);
-String startNodeId = nodes.get(0).getNodeId();
+String startNodeId = nodes.stream()
+    .filter(node -> "local_file".equals(node.getDatasourceType()))
+    .findFirst().orElseThrow(() -> new IllegalStateException("Configure a local_file node first"))
+    .getNodeId();
 
 // 2) 为 Pipeline 上传文件（本地文件类型的数据源）
 PipelineFileUploadResponse uploaded = datasetsClient.uploadPipelineFile(new java.io.File("./doc.pdf"));
 
-// 3) 运行整个 Pipeline（阻塞模式）
+// 3) 提交已发布的 Pipeline（返回 JSON 排队回执）
 java.util.Map<String, Object> localFileItem = new java.util.HashMap<>();
 localFileItem.put("reference", uploaded.getId());
 localFileItem.put("name", uploaded.getName());
@@ -467,21 +472,53 @@ PipelineRunRequest runRequest = PipelineRunRequest.builder()
 
 java.util.Map<String, Object> result = datasetsClient.runPipeline(datasetId, runRequest);
 
-// 或流式模式
-datasetsClient.runPipelineStream(datasetId, runRequest, new WorkflowStreamCallback() {
+// 草稿 Pipeline 才支持 SSE；草稿节点 ID 可能与已发布版本不同
+String draftStartNodeId = datasetsClient.listPipelineDatasourcePlugins(datasetId, false).stream()
+    .filter(node -> "local_file".equals(node.getDatasourceType()))
+    .findFirst().orElseThrow(() -> new IllegalStateException("Configure a draft local_file node first"))
+    .getNodeId();
+PipelineRunRequest draftRequest = PipelineRunRequest.builder()
+    .inputs(new java.util.HashMap<>())
+    .datasourceType("local_file")
+    .datasourceInfoList(java.util.Arrays.asList(localFileItem))
+    .startNodeId(draftStartNodeId)
+    .isPublished(false)
+    .build();
+datasetsClient.runPipelineStream(datasetId, draftRequest, new WorkflowStreamCallback() {
     @Override
     public void onNodeFinished(NodeFinishedEvent event) {
         System.out.println("节点完成: " + event.getData().getTitle());
     }
 });
 
-// 4) 单独运行某个数据源节点（流式）
+// 4) 运行已配置的 online_drive 数据源节点（以下回调需要 1.7.0）
+DatasourcePluginResponse driveNode = nodes.stream()
+    .filter(node -> "online_drive".equals(node.getDatasourceType()))
+    .findFirst().orElseThrow(() -> new IllegalStateException("Configure an online_drive node first"));
+java.util.Map<String, Object> driveInputs = new java.util.HashMap<>();
+// 按 driveNode.getUserInputVariables() 填写插件要求的输入；凭证须已在 Dify 配置
 DatasourceNodeRunRequest nodeRequest = DatasourceNodeRunRequest.builder()
-    .inputs(new java.util.HashMap<>())
-    .datasourceType("local_file")
+    .inputs(driveInputs)
+    .datasourceType("online_drive")
     .isPublished(true)
     .build();
-datasetsClient.runPipelineDatasourceNodeStream(datasetId, startNodeId, nodeRequest, callback);
+datasetsClient.runPipelineDatasourceNodeStream(datasetId, driveNode.getNodeId(), nodeRequest,
+    new WorkflowStreamCallback() {
+        @Override
+        public void onDatasourceCompleted(DatasourceCompletedEvent event) {
+            System.out.println(event.getData());
+        }
+
+        @Override
+        public void onDatasourceError(DatasourceErrorEvent event) {
+            System.err.println(event.getError());
+        }
+
+        @Override
+        public void onStreamComplete() {
+            System.out.println("Stream complete");
+        }
+    });
 ```
 
 ### 5. 终端用户 (End Users)
@@ -497,6 +534,8 @@ System.out.println("session_id: " + endUser.getSessionId());
 ### 6. 人工介入 (Human Input Flow)
 
 Dify 1.14.2+ 支持在 Workflow/Chatflow 中插入 Human Input 节点让人工填写表单后继续执行。SDK 支持完整闭环。
+
+需在 Human Input 节点启用 WebApp 投递，才能通过 API 获取和提交表单；其他审批渠道可能不提供 `form_token`。
 
 ```java
 // 1) 订阅工作流 - 遇到人工介入节点时会触发 onHumanInputRequired
@@ -533,7 +572,8 @@ HumanInputFormSubmitRequest submit = HumanInputFormSubmitRequest.builder()
 client.submitHumanInputForm(formToken, submit);
 
 // 4) 恢复订阅工作流事件流（提交后工作流从暂停处继续）
-workflowClient.streamWorkflowEvents(workflowRunId, "reviewer-alice", true, false,
+// 恢复订阅必须使用原始运行的 user，不是审批人的 user
+workflowClient.streamWorkflowEvents(workflowRunId, request.getUser(), true, false,
     new WorkflowStreamCallback() {
         @Override
         public void onWorkflowFinished(WorkflowFinishedEvent event) {
@@ -660,6 +700,24 @@ DifyClient client = DifyClientFactory.createClient(config);
     - 工作流事件
     - 错误处理
 
+
+## 开发与验证
+
+当前源码为 **1.7.0-SNAPSHOT（未发布）**；上面的安装示例仍是已发布的 1.6.0。
+源码构建需要 Maven 3.9.2+；CI 配置覆盖 JDK 8、17、21、25、26。
+
+```bash
+mvn -B -ntp clean verify
+```
+
+默认只运行本地回归测试，不需要 Dify 密钥或 GPG。真实服务示例测试已标记为 `integration`；
+使用独立测试环境配置 `src/test/resources/dify-test-config.properties` 后，显式运行
+`mvn -Pintegration-tests test`。这些测试会创建、修改或删除 Dify 数据。
+
+从 1.7.0 起，流式回调新增 `onStreamComplete()`：两个 Chatflow 结束事件均已交付，
+或服务端正常 EOF 时通知；它表示读取完成，不代表业务成功。API 错误、网络或解析异常不触发该回调。
+数据源节点通过 `onDatasourceProcessing`、`onDatasourceCompleted`、`onDatasourceError` 回调交付结果；
+其中 `datasource_completed` 可逐页出现多次。维护依据与验证范围见 [CURRENT.md](CURRENT.md)。
 
 ## 贡献
 

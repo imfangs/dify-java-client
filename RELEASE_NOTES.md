@@ -1,3 +1,27 @@
+# Unreleased — 1.7.0-SNAPSHOT
+
+- Preserve both Chatflow terminal events in either order (based on PR #165),
+  and add `onStreamComplete()` for normal SSE termination across streaming APIs.
+  Transport, parsing and API failures do not report normal completion.
+- Accept both `id` and `message_id` in message chunks, while preserving
+  serialization and independent IDs on other event types.
+- Reject `runPipelineStream` for published pipelines before making a request;
+  use `runPipeline` to retrieve their JSON queue receipt. Draft pipelines support SSE.
+- Add datasource processing, completed and error callbacks. Datasource completion
+  can occur per page and does not end the stream.
+- Make local regression tests the default; real Dify tests require the
+  `integration-tests` profile. Pin Surefire, compile against Java 8 APIs, and
+  add a JDK 8/17/21/25/26 CI matrix.
+- Update Lombok to 1.18.48 for current JDK support.
+- Update the Javadoc plugin to 3.12.0 so Java 8 builds do not receive the
+  unsupported `--release` argument.
+- Move GPG signing to the `release` profile and verify before tagging a release.
+
+This version has not been published. See [CURRENT.md](CURRENT.md) for evidence
+and verification status; installation coordinates below refer to the prior release.
+
+# 1.6.0
+
 ## Changes
 
 - Add Service API for **Knowledge Pipeline (RAG Pipeline)** — 4 new endpoints on `DifyDatasetsClient`

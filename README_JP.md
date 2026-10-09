@@ -6,6 +6,8 @@
 
 [English](README_EN.md) | [简体中文](README.md) | 日本語
 
+このブランチの新しいストリーミングコールバックは **1.7.0-SNAPSHOT（未公開）** の機能で、ソースからのビルドが必要です。インストール例は公開済みの 1.6.0 を使用しています。
+
 Dify Java Clientは、[Dify](https://dify.ai)プラットフォームと連携するためのJavaクライアントライブラリです。DifyアプリケーションAPIとナレッジベースAPIの完全なサポートを提供し、Java開発者がDifyの生成AIの機能を自らのアプリケーションに簡単に統合できるようにします。
 
 ## 機能
@@ -445,12 +447,15 @@ try (FilePreviewResponse zip = datasetsClient.downloadDocumentsAsZip(datasetId, 
 ```java
 // 1) Pipeline に設定済みのデータソースノードを一覧
 List<DatasourcePluginResponse> nodes = datasetsClient.listPipelineDatasourcePlugins(datasetId, true);
-String startNodeId = nodes.get(0).getNodeId();
+String startNodeId = nodes.stream()
+    .filter(node -> "local_file".equals(node.getDatasourceType()))
+    .findFirst().orElseThrow(() -> new IllegalStateException("Configure a local_file node first"))
+    .getNodeId();
 
 // 2) Pipeline 用のファイルをアップロード
 PipelineFileUploadResponse uploaded = datasetsClient.uploadPipelineFile(new java.io.File("./doc.pdf"));
 
-// 3) Pipeline 全体を実行（ブロッキングモード）
+// 3) 公開済み Pipeline を投入（JSON のキュー受付結果を返す）
 java.util.Map<String, Object> item = new java.util.HashMap<>();
 item.put("reference", uploaded.getId());
 item.put("name", uploaded.getName());
@@ -465,11 +470,48 @@ PipelineRunRequest runRequest = PipelineRunRequest.builder()
 
 java.util.Map<String, Object> result = datasetsClient.runPipeline(datasetId, runRequest);
 
-// または、ストリーミング実行
-datasetsClient.runPipelineStream(datasetId, runRequest, callback);
+// SSE はドラフト用。ノード ID は公開済みバージョンと異なる場合がある
+String draftStartNodeId = datasetsClient.listPipelineDatasourcePlugins(datasetId, false).stream()
+    .filter(node -> "local_file".equals(node.getDatasourceType()))
+    .findFirst().orElseThrow(() -> new IllegalStateException("Configure a draft local_file node first"))
+    .getNodeId();
+PipelineRunRequest draftRequest = PipelineRunRequest.builder()
+    .inputs(new java.util.HashMap<>())
+    .datasourceType("local_file")
+    .datasourceInfoList(java.util.Arrays.asList(item))
+    .startNodeId(draftStartNodeId)
+    .isPublished(false)
+    .build();
+datasetsClient.runPipelineStream(datasetId, draftRequest, callback);
 
-// 4) 単一データソースノードを実行（ストリーミング）
-datasetsClient.runPipelineDatasourceNodeStream(datasetId, startNodeId, nodeRequest, callback);
+// 4) 設定済みの online_drive ノードを実行（以下のコールバックは 1.7.0 が必要）
+DatasourcePluginResponse driveNode = nodes.stream()
+    .filter(node -> "online_drive".equals(node.getDatasourceType()))
+    .findFirst().orElseThrow(() -> new IllegalStateException("Configure an online_drive node first"));
+java.util.Map<String, Object> driveInputs = new java.util.HashMap<>();
+// driveNode.getUserInputVariables() に従って入力を設定し、認証情報は Dify で事前に設定
+DatasourceNodeRunRequest nodeRequest = DatasourceNodeRunRequest.builder()
+    .inputs(driveInputs)
+    .datasourceType("online_drive")
+    .isPublished(true)
+    .build();
+datasetsClient.runPipelineDatasourceNodeStream(datasetId, driveNode.getNodeId(), nodeRequest,
+    new WorkflowStreamCallback() {
+        @Override
+        public void onDatasourceCompleted(DatasourceCompletedEvent event) {
+            System.out.println(event.getData());
+        }
+
+        @Override
+        public void onDatasourceError(DatasourceErrorEvent event) {
+            System.err.println(event.getError());
+        }
+
+        @Override
+        public void onStreamComplete() {
+            System.out.println("Stream complete");
+        }
+    });
 ```
 
 ### 5. エンドユーザー (End Users)
@@ -482,6 +524,8 @@ EndUserResponse endUser = client.getEndUser(endUserId);
 ### 6. 人間の介入 (Human Input Flow)
 
 Dify 1.14.2+ ではワークフロー/チャットフローに Human Input ノードを組み込んで、フォームの提出を待つ運用が可能です。
+
+API でフォームを取得・送信するには、Human Input ノードで WebApp 配信を有効にしてください。他の承認チャネルでは `form_token` が提供されない場合があります。
 
 ```java
 // 1) ワークフローに購読し、人間介入到達時に onHumanInputRequired が発火
@@ -508,7 +552,8 @@ HumanInputFormSubmitRequest submit = HumanInputFormSubmitRequest.builder()
 client.submitHumanInputForm(formToken, submit);
 
 // 4) 再開後のイベント購読
-workflowClient.streamWorkflowEvents(workflowRunId, "reviewer-alice", true, false, callback);
+// 再開時は承認者ではなく、元の実行を開始した user を使用
+workflowClient.streamWorkflowEvents(workflowRunId, request.getUser(), true, false, callback);
 ```
 
 ### 7. 思考ストリーム (reasoning_chunk)
@@ -620,6 +665,25 @@ DifyClient client = DifyClientFactory.createClient(config);
     - TTSイベント
     - ワークフローイベント
     - エラー処理
+
+## 開発と検証
+
+現在のソースは **1.7.0-SNAPSHOT（未公開）** です。上記のインストール例は公開済みの 1.6.0 を使用しています。
+ビルドには Maven 3.9.2+ が必要です。CI は JDK 8、17、21、25、26 を対象に設定しています。
+
+```bash
+mvn -B -ntp clean verify
+```
+
+通常のビルドはローカル回帰テストのみを実行し、Dify の認証情報や GPG は不要です。
+実サービスのテストには `integration` タグがあります。専用のテスト環境を
+`src/test/resources/dify-test-config.properties` に設定し、`mvn -Pintegration-tests test` で明示的に実行します。
+これらのテストは Dify データを作成・変更・削除します。
+
+1.7.0 から `onStreamComplete()` が追加され、Chatflow の両終了イベントの受信後、または正常な EOF 時に呼ばれます。
+読み取り完了を表し、業務処理の成功は保証しません。API エラー、通信・解析例外では呼ばれません。
+データソースの通知は `onDatasourceProcessing`、`onDatasourceCompleted`、`onDatasourceError` で受信します。
+`datasource_completed` はページごとに複数回届く場合があります。根拠と検証範囲は [CURRENT.md](CURRENT.md) を参照してください。
 
 ## 貢献
 

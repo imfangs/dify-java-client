@@ -1,0 +1,30 @@
+name: Java CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['8', '17', '21', '25', '26']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+      - name: Build artifacts and run local tests
+        run: mvn -B -ntp clean verify
+      - name: Check release script without publishing
+        if: matrix.java == '21'
+        run: bash scripts/test-release.sh

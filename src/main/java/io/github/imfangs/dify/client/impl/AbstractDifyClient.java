@@ -492,6 +492,39 @@ public abstract class AbstractDifyClient {
     }
 
     /**
+     * 带结束原因的行处理器。
+     */
+    @FunctionalInterface
+    protected interface StreamLineProcessor {
+        StreamLineResult process(String line);
+    }
+
+    /**
+     * SSE 行处理结果。
+     */
+    protected enum StreamLineResult {
+        CONTINUE,
+        COMPLETE,
+        ERROR
+    }
+
+    /** Carries the lifecycle through the original protected request/call extension points. */
+    private static final class LifecycleLineProcessor implements LineProcessor {
+        private final StreamLineProcessor delegate;
+        private final Runnable completionHandler;
+
+        private LifecycleLineProcessor(StreamLineProcessor delegate, Runnable completionHandler) {
+            this.delegate = delegate;
+            this.completionHandler = completionHandler;
+        }
+
+        @Override
+        public boolean process(String line) {
+            return delegate.process(line) == StreamLineResult.CONTINUE;
+        }
+    }
+
+    /**
      * 事件处理器
      */
     @FunctionalInterface
@@ -515,6 +548,17 @@ public abstract class AbstractDifyClient {
     }
 
     /**
+     * 执行 POST 流式请求，并在正常结束时通知调用方。
+     */
+    protected void executeStreamRequest(String path,
+                                        Object body,
+                                        StreamLineProcessor lineProcessor,
+                                        Consumer<Exception> errorHandler,
+                                        Runnable completionHandler) {
+        executeStreamRequest(path, body, new LifecycleLineProcessor(lineProcessor, completionHandler), errorHandler);
+    }
+
+    /**
      * 执行 GET 流式请求
      */
     protected void executeGetStreamRequest(String path, LineProcessor lineProcessor, Consumer<Exception> errorHandler) {
@@ -527,7 +571,39 @@ public abstract class AbstractDifyClient {
         executeStreamCall(httpRequest, lineProcessor, errorHandler);
     }
 
+    /**
+     * 执行 GET 流式请求，并在正常结束时通知调用方。
+     */
+    protected void executeGetStreamRequest(String path,
+                                           StreamLineProcessor lineProcessor,
+                                           Consumer<Exception> errorHandler,
+                                           Runnable completionHandler) {
+        executeGetStreamRequest(path, new LifecycleLineProcessor(lineProcessor, completionHandler), errorHandler);
+    }
+
     protected void executeStreamCall(Request httpRequest, LineProcessor lineProcessor, Consumer<Exception> errorHandler) {
+        if (lineProcessor instanceof LifecycleLineProcessor) {
+            LifecycleLineProcessor lifecycle = (LifecycleLineProcessor) lineProcessor;
+            executeStreamCallCore(httpRequest, lifecycle.delegate, errorHandler, lifecycle.completionHandler);
+        } else {
+            executeStreamCallCore(httpRequest,
+                    line -> lineProcessor.process(line) ? StreamLineResult.CONTINUE : StreamLineResult.COMPLETE,
+                    errorHandler,
+                    null);
+        }
+    }
+
+    protected void executeStreamCall(Request httpRequest,
+                                     StreamLineProcessor lineProcessor,
+                                     Consumer<Exception> errorHandler,
+                                     Runnable completionHandler) {
+        executeStreamCall(httpRequest, new LifecycleLineProcessor(lineProcessor, completionHandler), errorHandler);
+    }
+
+    private void executeStreamCallCore(Request httpRequest,
+                                       StreamLineProcessor lineProcessor,
+                                       Consumer<Exception> errorHandler,
+                                       Runnable completionHandler) {
         Call call = httpClient.newCall(httpRequest);
         call.enqueue(new Callback() {
             @Override
@@ -538,25 +614,19 @@ public abstract class AbstractDifyClient {
 
             @Override
             public void onResponse(Call call, Response response) {
-                if (!response.isSuccessful()) {
-                    try {
-                        String errorBody = response.body() != null ? response.body().string() : "";
-                        DifyApiException exception = createApiException(response.code(), errorBody);
-                        log.error("流式请求失败: {}", exception.getMessage());
-                        errorHandler.accept(exception);
-                    } catch (IOException e) {
-                        log.error("读取错误响应失败", e);
-                        errorHandler.accept(e);
-                    }
-                    return;
-                }
-
+                boolean receivedErrorEvent = false;
                 try (ResponseBody responseBody = response.body()) {
+                    if (!response.isSuccessful()) {
+                        String errorBody = responseBody != null ? responseBody.string() : "";
+                        throw createApiException(response.code(), errorBody);
+                    }
                     if (responseBody == null) {
-                        IOException exception = new IOException("空响应体");
-                        log.error("流式请求失败: {}", exception.getMessage());
-                        errorHandler.accept(exception);
-                        return;
+                        throw new IOException("空响应体");
+                    }
+                    MediaType contentType = responseBody.contentType();
+                    if (contentType != null && !("text".equals(contentType.type())
+                            && "event-stream".equals(contentType.subtype()))) {
+                        throw new IOException("Expected text/event-stream but received " + contentType);
                     }
 
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseBody.byteStream(), StandardCharsets.UTF_8))) {
@@ -565,7 +635,13 @@ public abstract class AbstractDifyClient {
                             if (line.isEmpty()) {
                                 continue;
                             }
-                            if (!lineProcessor.process(line)) {
+
+                            StreamLineResult result = lineProcessor.process(line);
+                            if (result == StreamLineResult.ERROR) {
+                                receivedErrorEvent = true;
+                                break;
+                            }
+                            if (result == StreamLineResult.COMPLETE) {
                                 break;
                             }
                         }
@@ -573,6 +649,15 @@ public abstract class AbstractDifyClient {
                 } catch (Exception e) {
                     log.error("处理流式响应失败: {}", e.getMessage(), e);
                     errorHandler.accept(e);
+                    return;
+                }
+                // Completion is observable only after response resources were closed successfully.
+                if (!receivedErrorEvent && completionHandler != null) {
+                    try {
+                        completionHandler.run();
+                    } catch (Exception e) {
+                        errorHandler.accept(e);
+                    }
                 }
             }
         });
@@ -587,21 +672,15 @@ public abstract class AbstractDifyClient {
         }
         if (line.startsWith(STREAM_DATA_PREFIX)) {
             String data = line.substring(STREAM_DATA_PREFIX.length()).trim();
-            try {
-                BaseEvent baseEvent = JsonUtils.fromJson(data, BaseEvent.class);
-                if (baseEvent == null) {
-                    log.warn("解析事件数据为null: {}", data);
-                    return true;
-                }
-                eventProcessor.process(data, baseEvent.getEvent());
-                String eventTypeStr = baseEvent.getEvent();
-                EventType eventType = eventTypeStr != null ? EventType.fromValue(eventTypeStr) : null;
-                if (eventType != null && terminalEvents.contains(eventType)) {
-                    return false;
-                }
-            } catch (Exception e) {
-                log.error("解析事件数据失败: {}", data, e);
-                callback.onException(e);
+            BaseEvent baseEvent = StreamEventDispatcher.parseStreamEvent(data, BaseEvent.class);
+            eventProcessor.process(data, baseEvent.getEvent());
+            String eventTypeStr = baseEvent.getEvent();
+            EventType eventType = eventTypeStr != null ? EventType.fromValue(eventTypeStr) : null;
+            if (eventType == EventType.ERROR || eventType == EventType.DATASOURCE_ERROR) {
+                return false;
+            }
+            if (eventType != null && terminalEvents.contains(eventType)) {
+                return false;
             }
         } else if (STREAM_PING_EVENT_LINE.equalsIgnoreCase(line)) {
             PingEvent pingEvent = new PingEvent();
@@ -609,5 +688,24 @@ public abstract class AbstractDifyClient {
             callback.onPing(pingEvent);
         }
         return true;
+    }
+
+    /**
+     * 处理一行 SSE 数据，并保留结束原因及旧的行处理扩展点。
+     */
+    protected StreamLineResult processStreamLineWithResult(String line,
+                                                           BaseStreamCallback callback,
+                                                           Set<EventType> terminalEvents,
+                                                           EventProcessor eventProcessor) {
+        boolean[] receivedError = {false};
+        boolean continueReading = processStreamLine(line, callback, terminalEvents, (data, eventType) -> {
+            receivedError[0] |= EventType.ERROR.getValue().equals(eventType)
+                    || EventType.DATASOURCE_ERROR.getValue().equals(eventType);
+            eventProcessor.process(data, eventType);
+        });
+        if (receivedError[0]) {
+            return StreamLineResult.ERROR;
+        }
+        return continueReading ? StreamLineResult.CONTINUE : StreamLineResult.COMPLETE;
     }
 }

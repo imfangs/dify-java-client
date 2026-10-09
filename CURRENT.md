@@ -5,9 +5,10 @@ Updated: 2026-10-09. This file is the implementation and verification handoff.
 ## Baseline and scope
 
 - Started at `07b922f00eb3b37ada9cd2696c89153614fe675b`, matching `origin/main`,
-  with a clean worktree. Latest GitHub release is `v1.6.0` (2026-07-10).
-- Development version: `1.7.0-SNAPSHOT`, not published. README installation
-  coordinates intentionally remain at the published `1.6.0`.
+  with a clean worktree. The latest release at maintenance start was `v1.6.0` (2026-07-10).
+- The maintenance snapshot was committed as `b4b07fcc4e08c6362470be715a8c652e4bee7e0f`.
+  Version `1.7.0` is now prepared for publication, explicitly requested on 2026-10-09.
+  POM and all three README installation examples use the release version.
 - GitHub had no open issues. PR [#165](https://github.com/imfangs/dify-java-client/pull/165)
   provides the Chatflow terminal-order fix and stream completion callback;
   its source commit is `00d825db9e92b74acda8c896fb933130e22093ed`.
@@ -101,7 +102,12 @@ Final command: `mvn -B -ntp clean verify`, with each JDK selected via `JAVA_HOME
 - Negative SSE fixtures intentionally log errors; Surefire reports zero test
   failures. Existing non-fatal Javadoc/deprecation warnings remain.
 
-No live Dify integration test, remote CI run, release tag, push or publication
-was performed. CI is configured for JDK 8/17/21/25/26; local verification above
-does not claim remote CI success. The development snapshot is ready for the next
-release task; published coordinates remain 1.6.0 until that task completes.
+No live Dify integration test was performed. CI is configured for JDK
+8/17/21/25/26; local verification above does not claim remote CI success.
+
+## Release 1.7.0
+
+Publication is in progress. At preflight, the remote main branch still pointed
+to `07b922f00eb3b37ada9cd2696c89153614fe675b`, and neither GitHub tag/release
+`v1.7.0` nor the Maven Central 1.7.0 POM existed. Final publication receipts
+will be recorded after read-back.

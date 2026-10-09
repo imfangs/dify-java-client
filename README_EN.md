@@ -6,7 +6,7 @@
 
 English | [简体中文](README.md) | [日本語](README_JP.md)
 
-The new streaming callbacks on this branch belong to **1.7.0-SNAPSHOT (unreleased)** and require a source build. Installation examples still reference published version 1.6.0.
+**1.7.0** adds stream completion and datasource callbacks, and fixes Chatflow terminal-event handling.
 
 Dify Java Client is a Java client library for interacting with the [Dify](https://dify.ai) platform. It provides complete support for Dify Application APIs and Knowledge Base APIs, enabling Java developers to easily integrate Dify's generative AI capabilities into their applications.
 
@@ -62,14 +62,14 @@ Dify Java Client provides the following core features:
 <dependency>
     <groupId>io.github.imfangs</groupId>
     <artifactId>dify-java-client</artifactId>
-    <version>1.6.0</version>
+    <version>1.7.0</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation 'io.github.imfangs:dify-java-client:1.6.0'
+implementation 'io.github.imfangs:dify-java-client:1.7.0'
 ```
 
 ## Quick Start
@@ -669,8 +669,8 @@ DifyClient client = DifyClientFactory.createClient(config);
 
 ## Development and verification
 
-The working version is **1.7.0-SNAPSHOT (unreleased)**; installation examples above
-still use published version 1.6.0. Building requires Maven 3.9.2+; CI is configured
+The current version is **1.7.0**, as used in the installation examples above.
+Building requires Maven 3.9.2+; CI is configured
 for JDK 8, 17, 21, 25 and 26.
 
 ```bash

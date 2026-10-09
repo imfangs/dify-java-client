@@ -1,4 +1,4 @@
-# Unreleased — 1.7.0-SNAPSHOT
+# 1.7.0 — 2026-10-09
 
 - Preserve both Chatflow terminal events in either order (based on PR #165),
   and add `onStreamComplete()` for normal SSE termination across streaming APIs.
@@ -17,8 +17,17 @@
   unsupported `--release` argument.
 - Move GPG signing to the `release` profile and verify before tagging a release.
 
-This version has not been published. See [CURRENT.md](CURRENT.md) for evidence
-and verification status; installation coordinates below refer to the prior release.
+## Installation
+
+```xml
+<dependency>
+    <groupId>io.github.imfangs</groupId>
+    <artifactId>dify-java-client</artifactId>
+    <version>1.7.0</version>
+</dependency>
+```
+
+See [CURRENT.md](CURRENT.md) for contract evidence and verification status.
 
 # 1.6.0
 

@@ -6,7 +6,7 @@
 
 [English](README_EN.md) | 简体中文 | [日本語](README_JP.md)
 
-维护分支新增的流式回调属于 **1.7.0-SNAPSHOT（未发布）**，需从源码构建。安装示例仍指向已发布的 1.6.0。
+**1.7.0** 新增流结束与数据源事件回调，并修复 Chatflow 结束事件处理。
 
 Dify Java Client 是一个用于与 [Dify](https://dify.ai) 平台进行交互的 Java 客户端库。它提供了对 Dify 应用 API 和知识库 API 的完整支持，让 Java 开发者能够轻松地将 Dify 的生成式 AI 能力集成到自己的应用中。
 
@@ -62,14 +62,14 @@ Dify Java Client 提供以下核心功能：
 <dependency>
     <groupId>io.github.imfangs</groupId>
     <artifactId>dify-java-client</artifactId>
-    <version>1.6.0</version>
+    <version>1.7.0</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```groovy
-implementation 'io.github.imfangs:dify-java-client:1.6.0'
+implementation 'io.github.imfangs:dify-java-client:1.7.0'
 ```
 
 ## 快速开始
@@ -703,7 +703,7 @@ DifyClient client = DifyClientFactory.createClient(config);
 
 ## 开发与验证
 
-当前源码为 **1.7.0-SNAPSHOT（未发布）**；上面的安装示例仍是已发布的 1.6.0。
+当前版本为 **1.7.0**；上面的 Maven 与 Gradle 示例使用此版本。
 源码构建需要 Maven 3.9.2+；CI 配置覆盖 JDK 8、17、21、25、26。
 
 ```bash

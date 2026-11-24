@@ -1,5 +1,6 @@
 package io.github.imfangs.dify.client.model.datasets;
 
+import io.github.imfangs.dify.client.model.file.FileUploadResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -50,6 +51,11 @@ public class DocumentResponse {
          * 数据源信息
          */
         private DataSourceInfo dataSourceInfo;
+
+        /**
+         * 数据源详情字典
+         */
+        private DataSourceDetailDict dataSourceDetail;
 
         /**
          * 知识库处理规则ID
@@ -144,5 +150,19 @@ public class DocumentResponse {
          * 上传文件ID
          */
         private String uploadFileId;
+    }
+
+    /**
+     * 数据源详情字典
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DataSourceDetailDict {
+        /**
+         * 上传文件信息
+         */
+        FileUploadResponse uploadFile;
     }
 }
